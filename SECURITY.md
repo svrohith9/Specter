@@ -1,7 +1,7 @@
 # Security Policy
 
 ## Reporting a vulnerability
-Email: security@example.com
+Email: security@example.com, svrohith9@gmail.com
 
 Please include:
 - Description of the issue
