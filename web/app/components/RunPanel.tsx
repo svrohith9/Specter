@@ -11,6 +11,17 @@ type Execution = {
   duration_ms?: number | null;
 };
 
+type ExecutionDetail = {
+  id: string;
+  intent: string;
+  status: string;
+  graph?: { nodes: { id: string; type: string; deps: string[] }[] };
+  result?: unknown;
+  started_at?: string | null;
+  completed_at?: string | null;
+  duration_ms?: number | null;
+};
+
 type RunResult = {
   result?: {
     execution_id?: string;
@@ -36,6 +47,8 @@ export default function RunPanel() {
   const [toolDetails, setToolDetails] = useState<ToolSpec[]>([]);
   const [selectedTool, setSelectedTool] = useState<ToolSpec | null>(null);
   const [executions, setExecutions] = useState<Execution[]>([]);
+  const [selectedExecution, setSelectedExecution] = useState<ExecutionDetail | null>(null);
+  const [detailView, setDetailView] = useState<"graph" | "trace" | "raw">("graph");
   const [backendStatus, setBackendStatus] = useState("ok");
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [view, setView] = useState<"summary" | "events">("summary");
@@ -142,6 +155,28 @@ export default function RunPanel() {
     }
   }, [memoryTab, memoryType, memoryLimit, memoryQuery]);
 
+  async function loadExecution(id: string) {
+    try {
+      const resp = await fetch(`/api/executions/${id}`);
+      const data = await resp.json();
+      setSelectedExecution(data);
+    } catch {
+      setSelectedExecution(null);
+    }
+  }
+
+  async function replayExecution(id: string) {
+    setBusy(true);
+    try {
+      const resp = await fetch(`/api/executions/${id}/replay`, { method: "POST" });
+      const data = await resp.json();
+      setLast(data);
+      await loadMeta();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   useEffect(() => {
     if (!autoRefresh) return;
     const id = setInterval(() => loadMeta(), 10000);
@@ -167,6 +202,7 @@ export default function RunPanel() {
   }
 
   const events = useMemo(() => last?.events ?? [], [last]);
+  const lastExecutionId = useMemo(() => last?.result?.execution_id ?? null, [last]);
   const heatmap = useMemo(() => {
     const today = new Date();
     const days = 21;
@@ -330,7 +366,7 @@ export default function RunPanel() {
       </section>
 
       <section className="grid">
-        <div className="card">
+        <div className="card tools">
           <h3>Tool registry</h3>
           <div className="muted">Available skills in this runtime</div>
           <ul className="list">
@@ -373,7 +409,7 @@ export default function RunPanel() {
             )}
           </div>
         </div>
-        <div className="card">
+        <div className="card execs">
           <h3>Execution timeline</h3>
           <div className="muted">Recent task runs and status</div>
           <ul className="list">
@@ -389,10 +425,40 @@ export default function RunPanel() {
                     {ex.duration_ms != null && (
                       <div className="muted">Duration: {ex.duration_ms} ms</div>
                     )}
+                    <button className="ghost list-button" onClick={() => loadExecution(ex.id)}>
+                      View details
+                    </button>
                   </li>
                 ))}
           </ul>
         </div>
+        <div className="card playbooks">
+          <h3>Playbooks</h3>
+          <div className="muted">Suggested operator prompts</div>
+          <div className="playbook">
+            <button
+              onClick={() => setText("Summarize today’s tasks and draft a plan")}
+              className="ghost"
+            >
+              Daily planning
+            </button>
+            <button
+              onClick={() => setText("Draft a Q2 product launch checklist")}
+              className="ghost"
+            >
+              Launch checklist
+            </button>
+            <button
+              onClick={() => setText("Create a sales follow-up sequence for new leads")}
+              className="ghost"
+            >
+              Sales follow-up
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid-duo">
         <div className="card memory">
           <div className="row">
             <h3>Memory</h3>
@@ -543,31 +609,143 @@ export default function RunPanel() {
             </div>
           )}
         </div>
-        <div className="card">
-          <h3>Playbooks</h3>
-          <div className="muted">Suggested operator prompts</div>
-          <div className="playbook">
-            <button
-              onClick={() => setText("Summarize today’s tasks and draft a plan")}
-              className="ghost"
-            >
-              Daily planning
-            </button>
-            <button
-              onClick={() => setText("Draft a Q2 product launch checklist")}
-              className="ghost"
-            >
-              Launch checklist
-            </button>
-            <button
-              onClick={() => setText("Create a sales follow-up sequence for new leads")}
-              className="ghost"
-            >
-              Sales follow-up
-            </button>
+        <div className="card detail">
+          <div className="row">
+            <h3>Execution detail</h3>
+            {selectedExecution ? (
+              <button className="ghost" onClick={() => replayExecution(selectedExecution.id)}>
+                Replay
+              </button>
+            ) : null}
           </div>
+          {!selectedExecution ? (
+            <div className="muted">Select an execution to inspect the graph.</div>
+          ) : (
+            <>
+              <div className="detail-meta">
+                <div className="muted">{selectedExecution.intent}</div>
+                <div className={`status ${selectedExecution.status}`}>{selectedExecution.status}</div>
+              </div>
+              <div className="detail-tabs">
+                <button
+                  className={`ghost ${detailView === "graph" ? "active" : ""}`}
+                  onClick={() => setDetailView("graph")}
+                >
+                  Graph
+                </button>
+                <button
+                  className={`ghost ${detailView === "trace" ? "active" : ""}`}
+                  onClick={() => setDetailView("trace")}
+                >
+                  Trace
+                </button>
+                <button
+                  className={`ghost ${detailView === "raw" ? "active" : ""}`}
+                  onClick={() => setDetailView("raw")}
+                >
+                  Raw
+                </button>
+              </div>
+              {detailView === "graph" && (
+                <div className="graph-surface">
+                  <svg viewBox="0 0 420 220" width="100%" height="220">
+                    {graphLayout.edges.map((edge, idx) => {
+                      const from = graphLayout.nodes.find((n) => n.id === edge.from);
+                      const to = graphLayout.nodes.find((n) => n.id === edge.to);
+                      if (!from || !to) return null;
+                      return (
+                        <line
+                          key={`${edge.from}-${edge.to}-${idx}`}
+                          x1={from.x}
+                          y1={from.y}
+                          x2={to.x}
+                          y2={to.y}
+                          stroke="#94a3b8"
+                          strokeWidth="1"
+                        />
+                      );
+                    })}
+                    {graphLayout.nodes.map((node) => (
+                      <g key={node.id}>
+                        <circle cx={node.x} cy={node.y} r="18" fill="#ff7a18" opacity="0.2" />
+                        <circle cx={node.x} cy={node.y} r="10" fill="#ff7a18" />
+                        <text x={node.x + 16} y={node.y + 4} fontSize="10" fill="#1f2937">
+                          {node.id}
+                        </text>
+                      </g>
+                    ))}
+                  </svg>
+                </div>
+              )}
+              {detailView === "trace" && (
+                <div className="trace">
+                  {selectedExecution.id !== lastExecutionId ? (
+                    <div className="muted">No live trace stored for this run.</div>
+                  ) : events.length === 0 ? (
+                    <div className="muted">No events yet.</div>
+                  ) : (
+                    events.map((evt, idx) => (
+                      <div key={idx} className="trace-row">
+                        <span className="trace-dot" />
+                        <div>
+                          <div className="trace-title">{evt.event}</div>
+                          {evt.node && <div className="muted">node: {evt.node}</div>}
+                          {evt.error && <div className="trace-error">{evt.error}</div>}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+              {detailView === "raw" && (
+                <pre>{JSON.stringify(selectedExecution, null, 2)}</pre>
+              )}
+            </>
+          )}
         </div>
       </section>
     </div>
   );
 }
+  const graphLayout = useMemo(() => {
+    const nodes = selectedExecution?.graph?.nodes ?? [];
+    if (!nodes.length) return { nodes: [], edges: [] as { from: string; to: string }[] };
+    const depth = new Map<string, number>();
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+
+    const calcDepth = (id: string): number => {
+      if (depth.has(id)) return depth.get(id) ?? 0;
+      const node = byId.get(id);
+      if (!node || !node.deps?.length) {
+        depth.set(id, 0);
+        return 0;
+      }
+      const d = Math.max(...node.deps.map(calcDepth)) + 1;
+      depth.set(id, d);
+      return d;
+    };
+
+    nodes.forEach((n) => calcDepth(n.id));
+    const layers: Record<number, string[]> = {};
+    nodes.forEach((n) => {
+      const d = depth.get(n.id) ?? 0;
+      layers[d] = layers[d] ?? [];
+      layers[d].push(n.id);
+    });
+
+    const layoutNodes = nodes.map((n) => {
+      const d = depth.get(n.id) ?? 0;
+      const index = layers[d]?.indexOf(n.id) ?? 0;
+      return {
+        ...n,
+        x: 60 + d * 120,
+        y: 40 + index * 60,
+      };
+    });
+
+    const edges = nodes.flatMap((n) =>
+      (n.deps ?? []).map((dep) => ({ from: dep, to: n.id }))
+    );
+
+    return { nodes: layoutNodes, edges };
+  }, [selectedExecution]);

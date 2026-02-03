@@ -265,6 +265,12 @@ button:hover:not(:disabled) {
   gap: 16px;
 }
 
+.grid-duo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 16px;
+}
+
 .card {
   border: 1px solid var(--stroke);
   border-radius: 20px;
@@ -386,7 +392,23 @@ pre {
 .memory {
   display: grid;
   gap: 12px;
-  grid-column: span 2;
+}
+
+.detail {
+  display: grid;
+  gap: 12px;
+}
+
+.detail-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-tabs {
+  display: flex;
+  gap: 8px;
 }
 
 .memory-search {
@@ -545,7 +567,7 @@ pre {
   .grid {
     grid-template-columns: 1fr;
   }
-  .memory {
-    grid-column: span 1;
+  .grid-duo {
+    grid-template-columns: 1fr;
   }
 }
