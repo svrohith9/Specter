@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+
+# Virtual envs
+.venv/
+venv/
+
+# Build / dist
+build/
+dist/
+*.egg-info/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# SQLite
+*.db
+*.db-wal
+*.db-shm
+
+# Env
+.env
+.env.*
+
+# Generated skills
+src/specter/skills/generated/
+
+# Data
+/data/
