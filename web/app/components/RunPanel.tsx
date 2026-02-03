@@ -20,6 +20,7 @@ type RunResult = {
 
 export default function RunPanel() {
   const [text, setText] = useState("");
+  const [agent, setAgent] = useState("default");
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<RunResult | null>(null);
   const [tools, setTools] = useState<string[]>([]);
@@ -48,7 +49,7 @@ export default function RunPanel() {
       const resp = await fetch("/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ text, agent_id: agent })
       });
       const data = await resp.json();
       setLast(data);
@@ -59,39 +60,76 @@ export default function RunPanel() {
   }
 
   return (
-    <div className="panel">
-      <div className="panel-head">
+    <div className="shell">
+      <header className="hero">
         <div>
-          <div className="eyebrow">Specter Control</div>
-          <h1>Execution-First Workspace</h1>
-          <p>Run a task, inspect tool availability, and replay outputs.</p>
+          <div className="kicker">Specter Control Plane</div>
+          <h1>
+            Command the execution layer.
+            <span>Ship outcomes, not prompts.</span>
+          </h1>
+          <p>
+            A local-first autonomous agent that turns intent into parallel execution.
+          </p>
         </div>
-        <button className="ghost" onClick={loadMeta}>Refresh</button>
-      </div>
+        <div className="badge">
+          <div className="badge-title">Status</div>
+          <div className="badge-value">Live</div>
+          <div className="badge-sub">Port 8000</div>
+        </div>
+      </header>
 
-      <div className="input-row">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Try: Summarize today’s tasks and draft a plan"
-        />
-        <button className="primary" onClick={onRun} disabled={busy}>
-          {busy ? "Running..." : "Execute"}
-        </button>
-      </div>
+      <section className="control">
+        <div className="panel">
+          <div className="panel-head">
+            <div>
+              <h2>Run a task</h2>
+              <p>Natural language in. Deterministic execution out.</p>
+            </div>
+            <div className="chip">Agent: {agent}</div>
+          </div>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Try: Create a launch plan for a new app with milestones"
+          />
+          <div className="row">
+            <input
+              className="input"
+              value={agent}
+              onChange={(e) => setAgent(e.target.value)}
+              placeholder="agent id"
+            />
+            <button className="primary" onClick={onRun} disabled={busy}>
+              {busy ? "Executing…" : "Execute"}
+            </button>
+          </div>
+        </div>
 
-      <div className="grid">
+        <div className="panel result">
+          <div className="panel-head">
+            <div>
+              <h2>Latest output</h2>
+              <p>Execution trace and result payload.</p>
+            </div>
+            <button className="ghost" onClick={loadMeta}>Refresh</button>
+          </div>
+          <pre>{last ? JSON.stringify(last, null, 2) : "Run a task to see results."}</pre>
+        </div>
+      </section>
+
+      <section className="grid">
         <div className="card">
           <h3>Tools</h3>
-          <ul>
+          <ul className="list">
             {tools.map((tool) => (
               <li key={tool}>{tool}</li>
             ))}
           </ul>
         </div>
         <div className="card">
-          <h3>Recent Executions</h3>
-          <ul>
+          <h3>Executions</h3>
+          <ul className="list">
             {executions.map((ex) => (
               <li key={ex.id}>
                 <div className="row">
@@ -104,10 +142,24 @@ export default function RunPanel() {
           </ul>
         </div>
         <div className="card">
-          <h3>Latest Result</h3>
-          <pre>{last ? JSON.stringify(last, null, 2) : "Run something"}</pre>
+          <h3>Playbook</h3>
+          <div className="muted">Suggested prompts</div>
+          <div className="playbook">
+            <button onClick={() => setText("Summarize today’s tasks and draft a plan")}
+              className="ghost">
+              Daily planning
+            </button>
+            <button onClick={() => setText("Draft a Q2 product launch checklist")}
+              className="ghost">
+              Launch checklist
+            </button>
+            <button onClick={() => setText("Create a sales follow-up sequence for new leads")}
+              className="ghost">
+              Sales follow-up
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
