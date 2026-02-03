@@ -72,6 +72,8 @@ docker-compose up --build
 - `docs/deployment.md`
 - `docs/skills.md`
 - `docs/roadmap.md`
+- `docs/contributing-style.md`
+- `docs/ci-cd.md`
 
 ## Development
 
@@ -82,3 +84,12 @@ poetry run ruff check .
 
 ## License
 MIT
+
+## Community
+- `CONTRIBUTING.md`
+- `CODE_OF_CONDUCT.md`
+- `SECURITY.md`
+- `GOVERNANCE.md`
+- `MAINTAINERS.md`
+- `SUPPORT.md`
+- `CITATION.cff`

@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+title: "Specter"
+message: "If you use this software, please cite it."
+authors:
+  - family-names: "Sv"
+    given-names: "Rohith"
+repository-code: "https://github.com/svrohith9/Specter"
+license: "MIT"
+version: "0.1.0"
