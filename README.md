@@ -4,24 +4,24 @@
 ![Release](https://github.com/svrohith9/Specter/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-Execution-first autonomous agent with parallel DAG execution, self-healing, structured memory, and presence intelligence.
+Specter is an execution-first autonomous agent that turns intent into parallelized action. It plans tasks as DAGs, executes them, self-heals when possible, and persists knowledge and execution history locally.
 
-## Status
-Production-oriented core is live. The system persists executions, supports a tool gateway, and provides a local UI.
+## What It Does
+- Converts natural language requests into execution graphs
+- Runs tasks in parallel where possible
+- Persists every execution for replay and auditing
+- Stores knowledge locally in SQLite
+- Exposes a tool gateway with policy controls
 
 ## Architecture
 ![Specter architecture](docs/architecture.svg)
 ![Specter pipeline](docs/pipeline.svg)
 
-## Features
-- Parallel execution graphs (DAG-based)
-- Self-healing error handling (strategy-based)
-- Structured knowledge graph memory (SQLite)
-- Presence intelligence for confirmation vs autonomy
-- FastAPI webhooks + WebSocket streaming
-- Tool invocation gateway with policy allow/deny
-- Local CLI for runs and execution replay
- - Local dashboard and Next.js control UI
+## Product Snapshot
+![Specter UI](docs/specter-ui.png)
+
+## Why Specter
+Specter focuses on minimal, reliable automation rather than heavy frameworks. It is local-first, fast to deploy, and built to provide execution traceability rather than opaque chat logs.
 
 ## Quick Start
 
@@ -37,7 +37,7 @@ specter-cli tools
 specter-cli exec-list
 ```
 
-## Web UI (Next.js)
+## Web UI
 
 ```bash
 cd web

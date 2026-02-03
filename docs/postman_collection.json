@@ -1,0 +1,105 @@
+{
+  "info": {
+    "name": "Specter Local API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Webhook Test",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Summarize today’s tasks and draft a plan\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/webhook/test",
+          "host": ["{{baseUrl}}"],
+          "path": ["webhook", "test"]
+        }
+      }
+    },
+    {
+      "name": "Knowledge Search",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/knowledge/search?q=project&user_id=local",
+          "host": ["{{baseUrl}}"],
+          "path": ["knowledge", "search"],
+          "query": [
+            {"key": "q", "value": "project"},
+            {"key": "user_id", "value": "local"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Skills Forge (Stub)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"Create a simple calculator\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/skills/forge",
+          "host": ["{{baseUrl}}"],
+          "path": ["skills", "forge"]
+        }
+      }
+    },
+    {
+      "name": "Execution Trace (Stub)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/executions/exec_123",
+          "host": ["{{baseUrl}}"],
+          "path": ["executions", "exec_123"]
+        }
+      }
+    },
+    {
+      "name": "Healing Override (Stub)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"execution_id\": \"exec_123\",\n  \"fix_type\": \"syntax_repair\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/healing/override",
+          "host": ["{{baseUrl}}"],
+          "path": ["healing", "override"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {"key": "baseUrl", "value": "http://127.0.0.1:8000"}
+  ]
+}
