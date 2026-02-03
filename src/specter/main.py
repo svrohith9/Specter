@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, WebSocket
+from pydantic import BaseModel
 from fastapi.responses import JSONResponse
 
 from .brain.orchestrator import Orchestrator
@@ -31,6 +32,15 @@ class SimpleCallback(StreamCallback):
 
     async def on_complete(self, result):
         self.events.append({"event": "complete", "result": result})
+
+
+class SkillForgeRequest(BaseModel):
+    description: str
+
+
+class HealingOverrideRequest(BaseModel):
+    execution_id: str
+    fix_type: str
 
 
 configure_logging()
@@ -68,8 +78,8 @@ async def search_knowledge(q: str, user_id: str) -> JSONResponse:
 
 
 @app.post("/skills/forge")
-async def create_skill(description: str) -> JSONResponse:
-    return JSONResponse({"created": False, "description": description})
+async def create_skill(payload: SkillForgeRequest) -> JSONResponse:
+    return JSONResponse({"created": False, "description": payload.description})
 
 
 @app.get("/executions/{exec_id}")
@@ -78,8 +88,8 @@ async def get_execution(exec_id: str) -> JSONResponse:
 
 
 @app.post("/healing/override")
-async def manual_heal(execution_id: str, fix_type: str) -> JSONResponse:
-    return JSONResponse({"execution_id": execution_id, "fix_type": fix_type})
+async def manual_heal(payload: HealingOverrideRequest) -> JSONResponse:
+    return JSONResponse({"execution_id": payload.execution_id, "fix_type": payload.fix_type})
 
 
 @app.websocket("/ws/{user_id}")
