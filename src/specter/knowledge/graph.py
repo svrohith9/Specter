@@ -54,6 +54,7 @@ class KnowledgeGraph:
                     ),
                 )
             await db.commit()
+        await self._auto_summarize()
         return fact_id
 
     async def query(self, question: str, limit: int = 5) -> list[dict[str, Any]]:
@@ -112,6 +113,39 @@ class KnowledgeGraph:
             rows = await cursor.fetchall()
         return [
             {"id": r[0], "summary": r[1], "source_count": r[2], "created_at": r[3]}
+            for r in rows
+        ]
+
+    async def list_entities(
+        self,
+        ent_type: str | None = None,
+        limit: int = 50,
+        search: str | None = None,
+    ) -> list[dict[str, Any]]:
+        query = "SELECT id, type, name, created_at, expires_at FROM entities"
+        clauses = []
+        params: list[Any] = []
+        if ent_type:
+            clauses.append("type = ?")
+            params.append(ent_type)
+        if search:
+            clauses.append("name LIKE ?")
+            params.append(f"%{search}%")
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(query, params)
+            rows = await cursor.fetchall()
+        return [
+            {
+                "id": r[0],
+                "type": r[1],
+                "name": r[2],
+                "created_at": r[3],
+                "expires_at": r[4],
+            }
             for r in rows
         ]
 
@@ -230,3 +264,15 @@ class KnowledgeGraph:
             except Exception:
                 pass
         return " | ".join(facts[: settings.specter.knowledge.summary_window])
+
+    async def _auto_summarize(self) -> None:
+        window = settings.specter.knowledge.summary_window
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("SELECT COUNT(*) FROM entities WHERE type = 'fact'")
+            row = await cursor.fetchone()
+            if not row:
+                return
+            count = row[0]
+        if count % window != 0:
+            return
+        await self.summarize_recent(limit=window)

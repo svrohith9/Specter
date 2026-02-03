@@ -1,275 +1,301 @@
 {
-  "info": {
-    "name": "Specter Local API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "item": [
-    {
-      "name": "Health",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/health",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "health"
-          ]
-        }
-      }
+    "info": {
+        "name": "Specter Local API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
-    {
-      "name": "Webhook Test",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"text\": \"Summarize today\u2019s tasks and draft a plan\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/webhook/test",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "webhook",
-            "test"
-          ]
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8000"
         }
-      }
-    },
-    {
-      "name": "Knowledge Search",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/knowledge/search?q=project&user_id=local",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "knowledge",
-            "search"
-          ],
-          "query": [
-            {
-              "key": "q",
-              "value": "project"
-            },
-            {
-              "key": "user_id",
-              "value": "local"
+    ],
+    "item": [
+        {
+            "name": "Health",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/health",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "health"
+                    ]
+                }
             }
-          ]
-        }
-      }
-    },
-    {
-      "name": "Skills Forge (Stub)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"description\": \"Create a simple calculator\"\n}"
         },
-        "url": {
-          "raw": "{{baseUrl}}/skills/forge",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "skills",
-            "forge"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Execution Trace (Stub)",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/executions/exec_123",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "executions",
-            "exec_123"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Healing Override (Stub)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"execution_id\": \"exec_123\",\n  \"fix_type\": \"syntax_repair\"\n}"
+        {
+            "name": "Webhook Test",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"text\": \"Summarize today\u2019s tasks and draft a plan\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/webhook/test",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "webhook",
+                        "test"
+                    ]
+                }
+            }
         },
-        "url": {
-          "raw": "{{baseUrl}}/healing/override",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "healing",
-            "override"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Knowledge Summary",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "http://localhost:8000/knowledge/summary?user_id=local",
-          "host": [
-            "localhost"
-          ],
-          "port": "8000",
-          "path": [
-            "knowledge",
-            "summary?user_id=local"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Knowledge Summarize",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "http://localhost:8000/knowledge/summarize?user_id=local",
-          "host": [
-            "localhost"
-          ],
-          "port": "8000",
-          "path": [
-            "knowledge",
-            "summarize?user_id=local"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Agents List",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "http://localhost:8000/agents",
-          "host": [
-            "localhost"
-          ],
-          "port": "8000",
-          "path": [
-            "agents"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Agent Delegate",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "http://localhost:8000/agents/delegate",
-          "host": [
-            "localhost"
-          ],
-          "port": "8000",
-          "path": [
-            "agents",
-            "delegate"
-          ]
+        {
+            "name": "Knowledge Search",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/knowledge/search?q=project&user_id=local",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "knowledge",
+                        "search"
+                    ],
+                    "query": [
+                        {
+                            "key": "q",
+                            "value": "project"
+                        },
+                        {
+                            "key": "user_id",
+                            "value": "local"
+                        }
+                    ]
+                }
+            }
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"task\": \"Draft a launch checklist\",\n  \"role\": \"operator\",\n  \"user_id\": \"local\"\n}"
+        {
+            "name": "Knowledge Summary",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/knowledge/summary?user_id=local",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "knowledge",
+                        "summary"
+                    ],
+                    "query": [
+                        {
+                            "key": "user_id",
+                            "value": "local"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Knowledge Summarize",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/knowledge/summarize?user_id=local",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "knowledge",
+                        "summarize"
+                    ],
+                    "query": [
+                        {
+                            "key": "user_id",
+                            "value": "local"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Knowledge Cleanup",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/knowledge/cleanup?user_id=local",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "knowledge",
+                        "cleanup"
+                    ],
+                    "query": [
+                        {
+                            "key": "user_id",
+                            "value": "local"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Memory Entities List",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/knowledge/entities/list?user_id=local&limit=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "knowledge",
+                        "entities",
+                        "list"
+                    ],
+                    "query": [
+                        {
+                            "key": "user_id",
+                            "value": "local"
+                        },
+                        {
+                            "key": "limit",
+                            "value": "20"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Skills Forge",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"description\": \"Create a simple calculator\",\n  \"examples\": [\n    {\n      \"input\": {\"expression\": \"2+2\"},\n      \"output\": 4\n    }\n  ]\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/skills/forge",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "skills",
+                        "forge"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Execution Trace",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/executions/exec_123",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "executions",
+                        "exec_123"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Healing Override",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"execution_id\": \"exec_123\",\n  \"fix_type\": \"syntax_repair\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/healing/override",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "healing",
+                        "override"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Agents List",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/agents",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "agents"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Agent Delegate",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"task\": \"Draft a launch checklist\",\n  \"role\": \"operator\",\n  \"user_id\": \"local\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/agents/delegate",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "agents",
+                        "delegate"
+                    ]
+                }
+            }
         }
-      },
-      "response": []
-    },
-    {
-      "name": "Knowledge Cleanup",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "http://localhost:8000/knowledge/cleanup?user_id=local",
-          "host": [
-            "localhost"
-          ],
-          "port": "8000",
-          "path": [
-            "knowledge",
-            "cleanup?user_id=local"
-          ]
-        }
-      },
-      "response": []
-    }
-  ],
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://127.0.0.1:8000"
-    }
-  ]
+    ]
 }

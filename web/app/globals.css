@@ -394,6 +394,23 @@ pre {
   align-items: center;
 }
 
+.memory-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.select {
+  min-width: 90px;
+}
+
+.graph-surface {
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(15, 23, 32, 0.03);
+  border: 1px dashed var(--stroke);
+}
+
 .entity-list {
   display: grid;
   gap: 8px;

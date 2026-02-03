@@ -19,6 +19,8 @@
   - Creates a new summary from recent facts
 - `POST /knowledge/cleanup?user_id=...`
   - Clears expired entities and relations
+- `GET /knowledge/entities/list?user_id=...&ent_type=...&search=...&limit=...`
+  - List entities with filters
 
 ## Skills
 - `POST /skills/forge`

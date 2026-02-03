@@ -84,6 +84,10 @@ class AgentListResponse(BaseModel):
     agents: list[dict[str, Any]]
 
 
+class MemoryEntitiesResponse(BaseModel):
+    entities: list[dict[str, Any]]
+
+
 class DelegateRequest(BaseModel):
     task: str
     role: str | None = None
@@ -173,6 +177,19 @@ async def cleanup_memory(user_id: str) -> JSONResponse:
     await agent.init()
     await agent.kg.cleanup_expired()
     return JSONResponse({"status": "ok"})
+
+
+@app.get("/knowledge/entities/list")
+async def list_entities(
+    user_id: str,
+    ent_type: str | None = None,
+    limit: int = 50,
+    search: str | None = None,
+) -> MemoryEntitiesResponse:
+    agent = get_agent(user_id)
+    await agent.init()
+    entities = await agent.kg.list_entities(ent_type=ent_type, limit=limit, search=search)
+    return MemoryEntitiesResponse(entities=entities)
 
 
 @app.get("/agents")

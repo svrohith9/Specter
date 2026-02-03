@@ -44,6 +44,9 @@ export default function RunPanel() {
     { id: string; summary: string; source_count: number; created_at: string }[]
   >([]);
   const [memoryQuery, setMemoryQuery] = useState("");
+  const [memoryType, setMemoryType] = useState("all");
+  const [memoryLimit, setMemoryLimit] = useState(20);
+  const [memoryTab, setMemoryTab] = useState<"summaries" | "entities" | "graph">("summaries");
   const [entities, setEntities] = useState<
     { id: string; type: string; name: string; relations?: { type: string; target_id: string }[] }[]
   >([]);
@@ -100,10 +103,17 @@ export default function RunPanel() {
   }
 
   async function searchEntities() {
-    if (!memoryQuery.trim()) return;
     setMemoryBusy(true);
     try {
-      const resp = await fetch(`/api/memory/entities?q=${encodeURIComponent(memoryQuery)}`);
+      const params = new URLSearchParams();
+      if (memoryQuery.trim()) {
+        params.set("q", memoryQuery);
+      }
+      if (memoryType !== "all") {
+        params.set("type", memoryType);
+      }
+      params.set("limit", String(memoryLimit));
+      const resp = await fetch(`/api/memory/entities?${params.toString()}`);
       const data = await resp.json();
       setEntities(data.entities ?? []);
     } finally {
@@ -114,6 +124,7 @@ export default function RunPanel() {
   useEffect(() => {
     loadMeta();
     loadSummaries();
+    searchEntities();
   }, []);
 
   useEffect(() => {
@@ -354,19 +365,43 @@ export default function RunPanel() {
               {memoryBusy ? "Working…" : "Summarize"}
             </button>
           </div>
-          <div className="muted">Recent summaries</div>
-          <ul className="list">
-            {summaries.length === 0 ? (
-              <li className="muted">No summaries yet.</li>
-            ) : (
-              summaries.map((s) => (
-                <li key={s.id}>
-                  <div className="muted">{s.created_at}</div>
-                  <div>{s.summary}</div>
-                </li>
-              ))
-            )}
-          </ul>
+          <div className="memory-tabs">
+            <button
+              className={`ghost ${memoryTab === "summaries" ? "active" : ""}`}
+              onClick={() => setMemoryTab("summaries")}
+            >
+              Summaries
+            </button>
+            <button
+              className={`ghost ${memoryTab === "entities" ? "active" : ""}`}
+              onClick={() => setMemoryTab("entities")}
+            >
+              Entities
+            </button>
+            <button
+              className={`ghost ${memoryTab === "graph" ? "active" : ""}`}
+              onClick={() => setMemoryTab("graph")}
+            >
+              Graph
+            </button>
+          </div>
+          {memoryTab === "summaries" && (
+            <>
+              <div className="muted">Recent summaries</div>
+              <ul className="list">
+                {summaries.length === 0 ? (
+                  <li className="muted">No summaries yet.</li>
+                ) : (
+                  summaries.map((s) => (
+                    <li key={s.id}>
+                      <div className="muted">{s.created_at}</div>
+                      <div>{s.summary}</div>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </>
+          )}
           <div className="memory-search">
             <input
               className="input"
@@ -374,11 +409,34 @@ export default function RunPanel() {
               onChange={(e) => setMemoryQuery(e.target.value)}
               placeholder="Search entities"
             />
+            <select
+              className="input select"
+              value={memoryType}
+              onChange={(e) => setMemoryType(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="person">Person</option>
+              <option value="org">Org</option>
+              <option value="location">Location</option>
+              <option value="concept">Concept</option>
+              <option value="url">URL</option>
+              <option value="email">Email</option>
+              <option value="number">Number</option>
+            </select>
+            <select
+              className="input select"
+              value={memoryLimit}
+              onChange={(e) => setMemoryLimit(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
             <button className="ghost" onClick={searchEntities} disabled={memoryBusy}>
               Search
             </button>
           </div>
-          {entities.length > 0 && (
+          {memoryTab === "entities" && entities.length > 0 && (
             <div className="entity-list">
               {entities.map((ent) => (
                 <div key={ent.id} className="entity-row">
@@ -389,6 +447,27 @@ export default function RunPanel() {
                   ) : null}
                 </div>
               ))}
+            </div>
+          )}
+          {memoryTab === "graph" && entities.length > 0 && (
+            <div className="graph-surface">
+              <svg viewBox="0 0 420 220" width="100%" height="220">
+                {entities.slice(0, 12).map((ent, idx) => {
+                  const col = idx % 4;
+                  const row = Math.floor(idx / 4);
+                  const x = 40 + col * 120;
+                  const y = 30 + row * 70;
+                  return (
+                    <g key={ent.id}>
+                      <circle cx={x} cy={y} r="18" fill="#1f6feb" opacity="0.15" />
+                      <circle cx={x} cy={y} r="10" fill="#1f6feb" />
+                      <text x={x + 16} y={y + 4} fontSize="10" fill="#1f2937">
+                        {ent.name.slice(0, 10)}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
             </div>
           )}
         </div>
