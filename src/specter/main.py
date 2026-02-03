@@ -216,7 +216,19 @@ async def ui() -> HTMLResponse:
         f"<tr><td>{i['id']}</td><td>{i['status']}</td><td>{i['intent']}</td></tr>"
         for i in items
     )
-    html = f\"\"\"\n+    <html>\n+      <head><title>Specter UI</title></head>\n+      <body>\n+        <h2>Specter Executions</h2>\n+        <table border=\"1\" cellpadding=\"6\" cellspacing=\"0\">\n+          <tr><th>ID</th><th>Status</th><th>Intent</th></tr>\n+          {rows}\n+        </table>\n+      </body>\n+    </html>\n+    \"\"\"\n+    return HTMLResponse(html)\n*** End Patch code
+    html = f"""
+    <html>
+      <head><title>Specter UI</title></head>
+      <body>
+        <h2>Specter Executions</h2>
+        <table border="1" cellpadding="6" cellspacing="0">
+          <tr><th>ID</th><th>Status</th><th>Intent</th></tr>
+          {rows}
+        </table>
+      </body>
+    </html>
+    """
+    return HTMLResponse(html)
 
 
 def run() -> None:
