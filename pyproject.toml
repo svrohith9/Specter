@@ -10,7 +10,7 @@ packages = [{ include = "specter", from = "src" }]
 python = "^3.12"
 fastapi = "^0.115.0"
 uvicorn = { version = "^0.30.0", extras = ["standard"] }
-uvloop = "^0.20.0"
+uvloop = "^0.22.1"
 ujson = "^5.10.0"
 httpx = "^0.28.1"
 aiosqlite = "^0.20.0"
