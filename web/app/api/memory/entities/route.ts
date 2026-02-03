@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   const query = url.searchParams.get("q") ?? "";
   const type = url.searchParams.get("type") ?? "";
   const limit = url.searchParams.get("limit") ?? "20";
+  const includeRelations = url.searchParams.get("include_relations") ?? "false";
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
   try {
@@ -14,6 +15,7 @@ export async function GET(request: Request) {
     if (query) params.set("q", query);
     if (type && type !== "all") params.set("ent_type", type);
     params.set("limit", limit);
+    params.set("include_relations", includeRelations);
     const resp = await fetch(
       `${backendUrl}/knowledge/entities/list?user_id=local&${params.toString()}`,
       { cache: "no-store", signal: controller.signal }

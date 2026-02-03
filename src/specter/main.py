@@ -185,10 +185,16 @@ async def list_entities(
     ent_type: str | None = None,
     limit: int = 50,
     search: str | None = None,
+    include_relations: bool = False,
 ) -> MemoryEntitiesResponse:
     agent = get_agent(user_id)
     await agent.init()
-    entities = await agent.kg.list_entities(ent_type=ent_type, limit=limit, search=search)
+    entities = await agent.kg.list_entities(
+        ent_type=ent_type,
+        limit=limit,
+        search=search,
+        include_relations=include_relations,
+    )
     return MemoryEntitiesResponse(entities=entities)
 
 

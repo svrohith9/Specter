@@ -121,6 +121,7 @@ class KnowledgeGraph:
         ent_type: str | None = None,
         limit: int = 50,
         search: str | None = None,
+        include_relations: bool = False,
     ) -> list[dict[str, Any]]:
         query = "SELECT id, type, name, created_at, expires_at FROM entities"
         clauses = []
@@ -138,16 +139,30 @@ class KnowledgeGraph:
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute(query, params)
             rows = await cursor.fetchall()
-        return [
-            {
-                "id": r[0],
-                "type": r[1],
-                "name": r[2],
-                "created_at": r[3],
-                "expires_at": r[4],
-            }
-            for r in rows
-        ]
+            results = []
+            for row in rows:
+                item = {
+                    "id": row[0],
+                    "type": row[1],
+                    "name": row[2],
+                    "created_at": row[3],
+                    "expires_at": row[4],
+                }
+                if include_relations:
+                    rel_cursor = await db.execute(
+                        """
+                        SELECT relation_type, target_id FROM relationships
+                        WHERE source_id = ?
+                        LIMIT 12
+                        """,
+                        (row[0],),
+                    )
+                    rels = await rel_cursor.fetchall()
+                    item["relations"] = [
+                        {"type": rel[0], "target_id": rel[1]} for rel in rels
+                    ]
+                results.append(item)
+        return results
 
     async def query_entities(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         async with aiosqlite.connect(self.db_path) as db:

@@ -261,7 +261,7 @@ button:hover:not(:disabled) {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(260px, 1fr));
   gap: 16px;
 }
 
@@ -270,7 +270,7 @@ button:hover:not(:disabled) {
   border-radius: 20px;
   background: var(--card);
   padding: 18px;
-  min-height: 180px;
+  min-height: 200px;
 }
 
 .list {
@@ -386,18 +386,29 @@ pre {
 .memory {
   display: grid;
   gap: 12px;
+  grid-column: span 2;
 }
 
 .memory-search {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.memory-search .input {
+  min-width: 140px;
 }
 
 .memory-tabs {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.memory-tabs .ghost {
+  padding: 8px 12px;
+  font-size: 12px;
 }
 
 .select {
@@ -409,6 +420,41 @@ pre {
   padding: 12px;
   background: rgba(15, 23, 32, 0.03);
   border: 1px dashed var(--stroke);
+}
+
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(7, 10px);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.heatmap-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: rgba(15, 23, 32, 0.08);
+}
+
+.heat-1 {
+  background: rgba(31, 111, 235, 0.2);
+}
+
+.heat-2 {
+  background: rgba(31, 111, 235, 0.35);
+}
+
+.heat-3 {
+  background: rgba(31, 111, 235, 0.55);
+}
+
+.heat-4 {
+  background: rgba(31, 111, 235, 0.75);
+}
+
+.entity-list {
+  max-height: 220px;
+  overflow: auto;
 }
 
 .entity-list {
@@ -495,5 +541,11 @@ pre {
   }
   .hero-status {
     justify-items: start;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .memory {
+    grid-column: span 1;
   }
 }
