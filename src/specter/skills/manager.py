@@ -18,6 +18,9 @@ class SkillManager:
     def register(self, name: str, func: Any) -> None:
         self._skills[name] = func
 
+    def list(self) -> list[str]:
+        return sorted(self._skills.keys())
+
     async def load_from_db(self, db_path: str) -> None:
         async with aiosqlite.connect(db_path) as db:
             cursor = await db.execute("SELECT name, code FROM skills")
@@ -29,18 +32,24 @@ class SkillManager:
         self, db_path: str, name: str, payload: dict[str, Any]
     ) -> None:
         async with aiosqlite.connect(db_path) as db:
+            cursor = await db.execute(
+                "SELECT MAX(version) FROM skills WHERE name = ?",
+                (name,),
+            )
+            row = await cursor.fetchone()
+            next_version = (row[0] or 0) + 1
             await db.execute(
                 """
                 INSERT OR REPLACE INTO skills (id, name, description, signature, code, version)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    f"{name}_v1",
+                    f"{name}_v{next_version}",
                     name,
                     payload.get("description"),
                     "{}",
                     json.dumps(payload),
-                    1,
+                    next_version,
                 ),
             )
             await db.commit()

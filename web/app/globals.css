@@ -171,6 +171,10 @@ button.ghost {
   color: inherit;
 }
 
+button.ghost.active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 button:hover:not(:disabled) {
   transform: translateY(-2px);
 }
@@ -247,6 +251,46 @@ pre {
   display: grid;
   gap: 10px;
   margin-top: 12px;
+}
+
+.trace {
+  display: grid;
+  gap: 12px;
+  max-height: 320px;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.trace-row {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.trace-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent-2);
+  margin-top: 6px;
+}
+
+.trace-title {
+  font-weight: 600;
+}
+
+.trace-error {
+  color: #ff8a65;
+  font-size: 12px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 @keyframes rise {

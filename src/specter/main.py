@@ -57,6 +57,15 @@ class ToolListResponse(BaseModel):
     tools: list[str]
 
 
+class SkillRunRequest(BaseModel):
+    name: str
+    params: dict[str, Any] = {}
+
+
+class SkillListResponse(BaseModel):
+    skills: list[str]
+
+
 configure_logging()
 settings.load_yaml()
 
@@ -145,6 +154,21 @@ async def install_skill(payload: SkillInstallRequest) -> JSONResponse:
     )
     await agent.orchestrator.skills.load_from_db(agent.store.db_path)
     return JSONResponse({"installed": True, "name": payload.name})
+
+
+@app.get("/skills")
+async def list_skills() -> SkillListResponse:
+    agent = get_agent(None)
+    await agent.init()
+    return SkillListResponse(skills=agent.orchestrator.skills.list())
+
+
+@app.post("/skills/run")
+async def run_skill(payload: SkillRunRequest) -> JSONResponse:
+    agent = get_agent(None)
+    await agent.init()
+    result = await agent.orchestrator.skills.execute(payload.name, payload.params)
+    return JSONResponse(result)
 
 
 @app.get("/executions/{exec_id}")

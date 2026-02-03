@@ -17,6 +17,10 @@
   - Create a lightweight template skill
 - `POST /skills/install`
   - Install a template skill from JSON
+- `GET /skills`
+  - List skills
+- `POST /skills/run`
+  - Execute a skill by name
 
 ## Tools
 - `POST /tools/invoke`

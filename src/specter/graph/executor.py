@@ -42,6 +42,17 @@ class StreamingExecutor:
                 except Exception as exc:  # noqa: BLE001
                     states[node.id] = "failed"
                     results[node.id] = exc
+                    if node.error_strategy == "retry":
+                        try:
+                            result = await asyncio.wait_for(
+                                self._execute_node(node, results), timeout=node.timeout_seconds
+                            )
+                            states[node.id] = "completed"
+                            results[node.id] = result
+                            progress["completed"] += 1
+                            return
+                        except Exception:
+                            pass
                     if node.error_strategy == "heal":
                         fix = await self.healer.attempt_fix(node, exc)
                         if fix.get("success"):

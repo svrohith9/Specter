@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Execution = {
   id: string;
@@ -15,7 +15,7 @@ type RunResult = {
     execution_id?: string;
     result?: unknown;
   };
-  events?: unknown[];
+  events?: { event: string; node?: string; error?: string; result?: unknown }[];
 };
 
 export default function RunPanel() {
@@ -25,6 +25,8 @@ export default function RunPanel() {
   const [last, setLast] = useState<RunResult | null>(null);
   const [tools, setTools] = useState<string[]>([]);
   const [executions, setExecutions] = useState<Execution[]>([]);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [view, setView] = useState<"summary" | "events">("summary");
 
   async function loadMeta() {
     const [toolsResp, execResp] = await Promise.all([
@@ -40,6 +42,12 @@ export default function RunPanel() {
   useEffect(() => {
     loadMeta();
   }, []);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(() => loadMeta(), 5000);
+    return () => clearInterval(id);
+  }, [autoRefresh]);
 
   async function onRun() {
     if (!text.trim()) return;
@@ -58,6 +66,8 @@ export default function RunPanel() {
       setBusy(false);
     }
   }
+
+  const events = useMemo(() => last?.events ?? [], [last]);
 
   return (
     <div className="shell">
@@ -112,15 +122,58 @@ export default function RunPanel() {
               <h2>Latest output</h2>
               <p>Execution trace and result payload.</p>
             </div>
-            <button className="ghost" onClick={loadMeta}>Refresh</button>
+            <div className="row">
+              <button
+                className={`ghost ${view === "summary" ? "active" : ""}`}
+                onClick={() => setView("summary")}
+              >
+                Summary
+              </button>
+              <button
+                className={`ghost ${view === "events" ? "active" : ""}`}
+                onClick={() => setView("events")}
+              >
+                Trace
+              </button>
+              <button className="ghost" onClick={loadMeta}>Refresh</button>
+            </div>
           </div>
-          <pre>{last ? JSON.stringify(last, null, 2) : "Run a task to see results."}</pre>
+          {view === "summary" ? (
+            <pre>{last ? JSON.stringify(last, null, 2) : "Run a task to see results."}</pre>
+          ) : (
+            <div className="trace">
+              {events.length === 0 ? (
+                <div className="muted">No events yet.</div>
+              ) : (
+                events.map((evt, idx) => (
+                  <div key={idx} className="trace-row">
+                    <span className="trace-dot" />
+                    <div>
+                      <div className="trace-title">{evt.event}</div>
+                      {evt.node && <div className="muted">node: {evt.node}</div>}
+                      {evt.error && <div className="trace-error">{evt.error}</div>}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </section>
 
       <section className="grid">
         <div className="card">
-          <h3>Tools</h3>
+          <div className="row">
+            <h3>Tools</h3>
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+              />
+              <span>Auto refresh</span>
+            </label>
+          </div>
           <ul className="list">
             {tools.map((tool) => (
               <li key={tool}>{tool}</li>
