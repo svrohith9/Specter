@@ -2,6 +2,7 @@ specter:
   name: "Specter"
   autonomy_level: "high"
   default_agent: "default"
+  default_user_id: "local"
   data_dir: "./data"
 
   execution:

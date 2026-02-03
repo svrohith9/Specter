@@ -73,6 +73,7 @@ class SpecterConfig(BaseModel):
     name: str = "Specter"
     autonomy_level: str = "high"
     default_agent: str = "default"
+    default_user_id: str = "local"
     data_dir: str = "./data"
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)
     knowledge: KnowledgeConfig = Field(default_factory=KnowledgeConfig)

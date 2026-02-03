@@ -40,7 +40,8 @@ type ToolSpec = {
 
 export default function RunPanel() {
   const [text, setText] = useState("");
-  const [agent, setAgent] = useState("default");
+  const [agent, setAgent] = useState("");
+  const [userId, setUserId] = useState("");
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<RunResult | null>(null);
   const [tools, setTools] = useState<string[]>([]);
@@ -50,6 +51,8 @@ export default function RunPanel() {
   const [selectedExecution, setSelectedExecution] = useState<ExecutionDetail | null>(null);
   const [detailView, setDetailView] = useState<"graph" | "trace" | "raw">("graph");
   const [backendStatus, setBackendStatus] = useState("ok");
+  const [backendLabel, setBackendLabel] = useState("");
+  const [specterName, setSpecterName] = useState("Specter");
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [view, setView] = useState<"summary" | "events">("summary");
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
@@ -71,6 +74,26 @@ export default function RunPanel() {
   >([]);
   const [memoryBusy, setMemoryBusy] = useState(false);
   const inFlight = useRef(false);
+
+  async function loadConfig() {
+    try {
+      const resp = await fetch("/api/config");
+      const data = await resp.json();
+      setSpecterName(data.name || "Specter");
+      setAgent((prev) => prev || data.default_agent || "");
+      setUserId((prev) => prev || data.default_user_id || "");
+      if (data.backend_url) {
+        try {
+          const url = new URL(data.backend_url);
+          setBackendLabel(`${url.hostname}:${url.port || "80"}`);
+        } catch {
+          setBackendLabel(data.backend_url);
+        }
+      }
+    } catch {
+      setSpecterName("Specter");
+    }
+  }
 
   async function loadMeta() {
     if (inFlight.current) return;
@@ -103,7 +126,8 @@ export default function RunPanel() {
 
   async function loadSummaries() {
     try {
-      const resp = await fetch("/api/memory/summary");
+      const query = userId ? `?user_id=${encodeURIComponent(userId)}` : "";
+      const resp = await fetch(`/api/memory/summary${query}`);
       const data = await resp.json();
       setSummaries(data.summaries ?? []);
     } catch {
@@ -114,7 +138,8 @@ export default function RunPanel() {
   async function createSummary() {
     setMemoryBusy(true);
     try {
-      await fetch("/api/memory/summarize", { method: "POST" });
+      const query = userId ? `?user_id=${encodeURIComponent(userId)}` : "";
+      await fetch(`/api/memory/summarize${query}`, { method: "POST" });
       await loadSummaries();
     } finally {
       setMemoryBusy(false);
@@ -125,6 +150,9 @@ export default function RunPanel() {
     setMemoryBusy(true);
     try {
       const params = new URLSearchParams();
+      if (userId) {
+        params.set("user_id", userId);
+      }
       if (memoryQuery.trim()) {
         params.set("q", memoryQuery);
       }
@@ -144,6 +172,7 @@ export default function RunPanel() {
   }
 
   useEffect(() => {
+    loadConfig();
     loadMeta();
     loadSummaries();
     searchEntities();
@@ -191,7 +220,7 @@ export default function RunPanel() {
       const resp = await fetch("/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, agent_id: agent })
+        body: JSON.stringify({ text, agent_id: agent || undefined, user_id: userId || undefined })
       });
       const data = await resp.json();
       setLast(data);
@@ -229,11 +258,54 @@ export default function RunPanel() {
   const activeCount = executions.filter((ex) => ex.status === "running").length;
   const completedCount = executions.filter((ex) => ex.status === "completed").length;
 
+  const graphLayout = useMemo(() => {
+    const nodes = selectedExecution?.graph?.nodes ?? [];
+    if (!nodes.length) return { nodes: [], edges: [] as { from: string; to: string }[] };
+    const depth = new Map<string, number>();
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+
+    const calcDepth = (id: string): number => {
+      if (depth.has(id)) return depth.get(id) ?? 0;
+      const node = byId.get(id);
+      if (!node || !node.deps?.length) {
+        depth.set(id, 0);
+        return 0;
+      }
+      const d = Math.max(...node.deps.map(calcDepth)) + 1;
+      depth.set(id, d);
+      return d;
+    };
+
+    nodes.forEach((n) => calcDepth(n.id));
+    const layers: Record<number, string[]> = {};
+    nodes.forEach((n) => {
+      const d = depth.get(n.id) ?? 0;
+      layers[d] = layers[d] ?? [];
+      layers[d].push(n.id);
+    });
+
+    const layoutNodes = nodes.map((n) => {
+      const d = depth.get(n.id) ?? 0;
+      const index = layers[d]?.indexOf(n.id) ?? 0;
+      return {
+        ...n,
+        x: 60 + d * 120,
+        y: 40 + index * 60,
+      };
+    });
+
+    const edges = nodes.flatMap((n) =>
+      (n.deps ?? []).map((dep) => ({ from: dep, to: n.id }))
+    );
+
+    return { nodes: layoutNodes, edges };
+  }, [selectedExecution]);
+
   return (
     <div className="shell">
       <header className="hero">
         <div className="hero-copy">
-          <div className="kicker">Specter Command Center</div>
+          <div className="kicker">{specterName} Command Center</div>
           <h1>
             Orchestrate execution.
             <span>Move from intent to impact.</span>
@@ -250,7 +322,7 @@ export default function RunPanel() {
             <div className={`badge-value ${backendStatus}`}>
               {backendStatus === "ok" ? "Live" : "Offline"}
             </div>
-            <div className="badge-sub">Port 8000</div>
+          <div className="badge-sub">{backendLabel || "Backend"} </div>
           </div>
           <div className="badge ghosted">
             <div className="badge-title">Agent</div>
@@ -290,7 +362,7 @@ export default function RunPanel() {
               <h2>Command deck</h2>
               <p>Natural language in. Deterministic execution out.</p>
             </div>
-            <div className="chip">Agent: {agent}</div>
+            <div className="chip">Agent: {agent || "—"}</div>
           </div>
           <textarea
             value={text}
@@ -707,45 +779,3 @@ export default function RunPanel() {
     </div>
   );
 }
-  const graphLayout = useMemo(() => {
-    const nodes = selectedExecution?.graph?.nodes ?? [];
-    if (!nodes.length) return { nodes: [], edges: [] as { from: string; to: string }[] };
-    const depth = new Map<string, number>();
-    const byId = new Map(nodes.map((n) => [n.id, n]));
-
-    const calcDepth = (id: string): number => {
-      if (depth.has(id)) return depth.get(id) ?? 0;
-      const node = byId.get(id);
-      if (!node || !node.deps?.length) {
-        depth.set(id, 0);
-        return 0;
-      }
-      const d = Math.max(...node.deps.map(calcDepth)) + 1;
-      depth.set(id, d);
-      return d;
-    };
-
-    nodes.forEach((n) => calcDepth(n.id));
-    const layers: Record<number, string[]> = {};
-    nodes.forEach((n) => {
-      const d = depth.get(n.id) ?? 0;
-      layers[d] = layers[d] ?? [];
-      layers[d].push(n.id);
-    });
-
-    const layoutNodes = nodes.map((n) => {
-      const d = depth.get(n.id) ?? 0;
-      const index = layers[d]?.indexOf(n.id) ?? 0;
-      return {
-        ...n,
-        x: 60 + d * 120,
-        y: 40 + index * 60,
-      };
-    });
-
-    const edges = nodes.flatMap((n) =>
-      (n.deps ?? []).map((dep) => ({ from: dep, to: n.id }))
-    );
-
-    return { nodes: layoutNodes, edges };
-  }, [selectedExecution]);

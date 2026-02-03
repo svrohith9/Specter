@@ -19,9 +19,25 @@ class KnowledgeGraph:
 
     async def init(self) -> None:
         async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS schema_migrations (
+                    id TEXT PRIMARY KEY,
+                    applied_at TIMESTAMP
+                )
+                """
+            )
+            cursor = await db.execute("SELECT id FROM schema_migrations")
+            applied = {row[0] for row in await cursor.fetchall()}
             for migration in sorted(Path("migrations").glob("*.sql")):
+                if migration.name in applied:
+                    continue
                 with open(migration, encoding="utf-8") as f:
                     await db.executescript(f.read())
+                await db.execute(
+                    "INSERT OR REPLACE INTO schema_migrations (id, applied_at) VALUES (?, ?)",
+                    (migration.name, datetime.utcnow().isoformat()),
+                )
             await db.commit()
         await self.cleanup_expired()
 

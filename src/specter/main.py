@@ -95,6 +95,13 @@ class DelegateRequest(BaseModel):
     user_id: str | None = None
 
 
+class ConfigResponse(BaseModel):
+    name: str
+    default_agent: str
+    default_user_id: str
+    data_dir: str
+
+
 configure_logging()
 settings.load_yaml()
 
@@ -124,6 +131,16 @@ async def health() -> JSONResponse:
     return JSONResponse({"status": "ok"})
 
 
+@app.get("/config")
+async def config() -> ConfigResponse:
+    return ConfigResponse(
+        name=settings.specter.name,
+        default_agent=settings.specter.default_agent,
+        default_user_id=settings.specter.default_user_id,
+        data_dir=settings.specter.data_dir,
+    )
+
+
 @app.post("/webhook/{channel}")
 async def receive_message(channel: str, payload: dict[str, Any]) -> JSONResponse:
     callback = SimpleCallback()
@@ -133,7 +150,10 @@ async def receive_message(channel: str, payload: dict[str, Any]) -> JSONResponse
     await agent.kg.add_fact(user_text, confidence=0.6)
     result = await agent.orchestrator.run(
         user_text,
-        {"channel": channel, "user_id": payload.get("user_id", "local")},
+        {
+            "channel": channel,
+            "user_id": payload.get("user_id", settings.specter.default_user_id),
+        },
         callback,
     )
     return JSONResponse({"result": result, "events": callback.events})

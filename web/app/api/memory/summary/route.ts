@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 
 const backendUrl = process.env.BACKEND_URL ?? "http://127.0.0.1:8000";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const userId = url.searchParams.get("user_id") ?? "";
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
   try {
-    const resp = await fetch(`${backendUrl}/knowledge/summary?user_id=local`, {
+    const query = userId ? `?user_id=${encodeURIComponent(userId)}` : "";
+    const resp = await fetch(`${backendUrl}/knowledge/summary${query}`, {
       cache: "no-store",
       signal: controller.signal
     });
