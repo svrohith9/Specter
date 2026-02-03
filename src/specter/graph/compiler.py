@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime
 from typing import Any
 
@@ -17,6 +18,20 @@ class PlanSchema(BaseModel):
     nodes: list[Node]
 
 
+TOOL_CATALOG: list[dict[str, Any]] = [
+    {
+        "name": "calculate",
+        "description": "Evaluate a math expression safely.",
+        "params": {"expression": "string"},
+    },
+    {
+        "name": "web_fetch",
+        "description": "Fetch text from a URL.",
+        "params": {"url": "string", "timeout": "int", "max_chars": "int"},
+    },
+]
+
+
 class IntentCompiler:
     SYSTEM_PROMPT = (
         "You are an execution planner. Convert user requests into JSON DAGs."
@@ -31,22 +46,10 @@ class IntentCompiler:
             raw = await router.generate(prompt, json_schema=schema, temperature=temperature)
             data = json.loads(raw)
             plan = PlanSchema(**data)
+            self._validate_plan(plan)
             return ExecutionGraph(nodes=plan.nodes, max_parallel=10)
         except Exception:
-            # Safe fallback: deterministic single-node graph
-            node = Node(
-                id="llm_1",
-                type="llm",
-                spec={"prompt": f"Respond to: {user_input}"},
-                deps=[],
-                error_strategy="heal",
-            )
-            plan = ExecutionPlan(
-                intent_summary=user_input,
-                confidence=0.3,
-                nodes=[node],
-            )
-            return ExecutionGraph(nodes=plan.nodes, max_parallel=1)
+            return self._fallback_graph(user_input)
 
     def _context_payload(self, context: dict[str, Any]) -> dict[str, Any]:
         return {
@@ -62,7 +65,76 @@ class IntentCompiler:
             "1. Maximize parallelization (independent nodes parallel).\n"
             "2. Minimize LLM calls when tools suffice.\n"
             "3. Ensure DAG has no cycles.\n\n"
+            f"Available tools:\n{json.dumps(TOOL_CATALOG)}\n\n"
             f"User request: {user_input}\n"
             f"Context: {json.dumps(payload)}\n"
             "Return only JSON that matches the schema."
         )
+
+    def _validate_plan(self, plan: PlanSchema) -> None:
+        node_ids = [n.id for n in plan.nodes]
+        if len(set(node_ids)) != len(node_ids):
+            raise ValueError("Duplicate node ids")
+        id_set = set(node_ids)
+        for node in plan.nodes:
+            if node.type not in {"tool", "llm", "condition", "human_confirm"}:
+                raise ValueError(f"Invalid node type: {node.type}")
+            for dep in node.deps:
+                if dep not in id_set:
+                    raise ValueError(f"Unknown dependency: {dep}")
+            if node.type == "tool" and not node.spec.tool_name:
+                raise ValueError("Tool node missing tool_name")
+        self._assert_acyclic(plan.nodes)
+
+    def _assert_acyclic(self, nodes: list[Node]) -> None:
+        deps = {n.id: set(n.deps) for n in nodes}
+        visited: set[str] = set()
+        stack: set[str] = set()
+
+        def visit(nid: str) -> None:
+            if nid in stack:
+                raise ValueError("Cycle detected in graph")
+            if nid in visited:
+                return
+            stack.add(nid)
+            for dep in deps.get(nid, set()):
+                visit(dep)
+            stack.remove(nid)
+            visited.add(nid)
+
+        for nid in deps:
+            visit(nid)
+
+    def _fallback_graph(self, user_input: str) -> ExecutionGraph:
+        text = user_input.strip()
+        if re.search(r"https?://", text):
+            node = Node(
+                id="tool_1",
+                type="tool",
+                spec={"tool_name": "web_fetch", "params": {"url": text}},
+                deps=[],
+                error_strategy="heal",
+            )
+            return ExecutionGraph(nodes=[node], max_parallel=1)
+        if re.fullmatch(r"[0-9+\\-*/().\\s]+", text):
+            node = Node(
+                id="tool_1",
+                type="tool",
+                spec={"tool_name": "calculate", "params": {"expression": text}},
+                deps=[],
+                error_strategy="heal",
+            )
+            return ExecutionGraph(nodes=[node], max_parallel=1)
+        node = Node(
+            id="llm_1",
+            type="llm",
+            spec={"prompt": f"Respond to: {user_input}"},
+            deps=[],
+            error_strategy="heal",
+        )
+        plan = ExecutionPlan(
+            intent_summary=user_input,
+            confidence=0.3,
+            nodes=[node],
+        )
+        return ExecutionGraph(nodes=plan.nodes, max_parallel=1)
