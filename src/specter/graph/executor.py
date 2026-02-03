@@ -4,6 +4,7 @@ import asyncio
 from typing import Any
 
 from ..healing.engine import HealingEngine
+from ..llm.router import LLMRouter
 from ..skills.manager import SkillManager
 from .models import ExecutionGraph, Node
 from .streaming import StreamCallback
@@ -13,6 +14,7 @@ class StreamingExecutor:
     def __init__(self, skills: SkillManager, healer: HealingEngine) -> None:
         self.skills = skills
         self.healer = healer
+        self.llm = LLMRouter()
 
     async def execute(self, graph: ExecutionGraph, callback: StreamCallback) -> Any:
         sorted_nodes = graph.topological_sort()
@@ -79,7 +81,8 @@ class StreamingExecutor:
             return await self.skills.execute(node.spec.tool_name or "", params)
         if node.type == "llm":
             prompt = node.spec.prompt or ""
-            return {"text": prompt}
+            text = await self.llm.generate(prompt)
+            return {"text": text}
         if node.type == "human_confirm":
             return {"approved": False}
         if node.type == "condition":
