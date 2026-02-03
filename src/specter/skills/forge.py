@@ -129,21 +129,20 @@ class SkillForge:
         signature: dict[str, Any],
         examples: list[dict[str, Any]],
     ) -> tuple[str, str]:
-        code = """import json
-
-async def run(params: dict) -> dict:
-    return {
-        'success': True,
-        'data': {
-            'description': %s,
-            'params': params,
-            'examples': %s,
-        },
-        'error': None,
-    }
-""" % (
-            json.dumps(description),
-            json.dumps(examples),
+        description_json = json.dumps(description)
+        examples_json = json.dumps(examples)
+        code = (
+            "import json\n\n"
+            "async def run(params: dict) -> dict:\n"
+            "    return {\n"
+            "        'success': True,\n"
+            "        'data': {\n"
+            f"            'description': {description_json},\n"
+            "            'params': params,\n"
+            f"            'examples': {examples_json},\n"
+            "        },\n"
+            "        'error': None,\n"
+            "    }\n"
         )
         tests = self._generate_tests(signature, examples)
         return code, tests

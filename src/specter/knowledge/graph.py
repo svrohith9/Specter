@@ -40,7 +40,9 @@ class KnowledgeGraph:
                 ent_id = await self._get_or_create_entity(db, ent["type"], ent["name"], now)
                 await db.execute(
                     """
-                    INSERT INTO relationships (id, source_id, target_id, relation_type, strength, context, created_at)
+                    INSERT INTO relationships (
+                        id, source_id, target_id, relation_type, strength, context, created_at
+                    )
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
@@ -250,8 +252,12 @@ class KnowledgeGraph:
             await db.execute(
                 """
                 DELETE FROM relationships
-                WHERE source_id IN (SELECT id FROM entities WHERE expires_at IS NOT NULL AND expires_at < ?)
-                   OR target_id IN (SELECT id FROM entities WHERE expires_at IS NOT NULL AND expires_at < ?)
+                WHERE source_id IN (
+                    SELECT id FROM entities WHERE expires_at IS NOT NULL AND expires_at < ?
+                )
+                   OR target_id IN (
+                    SELECT id FROM entities WHERE expires_at IS NOT NULL AND expires_at < ?
+                )
                 """,
                 (now, now),
             )

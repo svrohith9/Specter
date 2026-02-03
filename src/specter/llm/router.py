@@ -74,8 +74,8 @@ class LLMRouter:
                         "type": "json_schema",
                         "json_schema": json_schema,
                     }
-                async def _call() -> Any:
-                    return await acompletion(**params)
+                async def _call(call_params: dict[str, Any] = params) -> Any:
+                    return await acompletion(**call_params)
 
                 resp = await self._retry.run(_call)
                 content = resp.choices[0].message.content

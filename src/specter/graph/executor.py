@@ -50,7 +50,8 @@ class StreamingExecutor:
                     if node.error_strategy == "retry":
                         try:
                             result = await asyncio.wait_for(
-                                self._execute_node(node, results, audit), timeout=node.timeout_seconds
+                                self._execute_node(node, results, audit),
+                                timeout=node.timeout_seconds,
                             )
                             states[node.id] = "completed"
                             results[node.id] = result
