@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
-
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -28,7 +26,7 @@ class KnowledgeConfig(BaseModel):
 
 class TelegramConfig(BaseModel):
     enabled: bool = True
-    webhook_url: Optional[str] = None
+    webhook_url: str | None = None
 
 
 class EmailConfig(BaseModel):
@@ -48,8 +46,8 @@ class ChannelsConfig(BaseModel):
 
 class SecurityConfig(BaseModel):
     sandbox: str = "firejail"
-    allowed_imports: List[str] = Field(default_factory=list)
-    blocked_patterns: List[str] = Field(default_factory=list)
+    allowed_imports: list[str] = Field(default_factory=list)
+    blocked_patterns: list[str] = Field(default_factory=list)
     max_execution_time: int = 30
     max_memory_mb: int = 256
 
@@ -60,7 +58,7 @@ class SpecterConfig(BaseModel):
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)
     knowledge: KnowledgeConfig = Field(default_factory=KnowledgeConfig)
     channels: ChannelsConfig = Field(default_factory=ChannelsConfig)
-    llm: Dict[str, List[LLMRoute]] = Field(default_factory=dict)
+    llm: dict[str, list[LLMRoute]] = Field(default_factory=dict)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
 
 
@@ -73,7 +71,7 @@ class Settings(BaseSettings):
     def load_yaml(self) -> None:
         import yaml
 
-        with open(self.config_path, "r", encoding="utf-8") as f:
+        with open(self.config_path, encoding="utf-8") as f:
             raw = yaml.safe_load(f) or {}
         if "specter" in raw:
             self.specter = SpecterConfig(**raw["specter"])

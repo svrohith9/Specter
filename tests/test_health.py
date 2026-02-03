@@ -1,5 +1,5 @@
-from specter.main import app
 from fastapi.testclient import TestClient
+from specter.main import app
 
 
 def test_health():

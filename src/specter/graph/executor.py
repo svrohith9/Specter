@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict, List
+from typing import Any
 
 from .models import ExecutionGraph, Node
 from .streaming import StreamCallback
@@ -17,7 +17,7 @@ class StreamingExecutor:
     async def execute(self, graph: ExecutionGraph, callback: StreamCallback) -> Any:
         sorted_nodes = graph.topological_sort()
         states = {n.id: "pending" for n in graph.nodes}
-        results: Dict[str, Any] = {}
+        results: dict[str, Any] = {}
         progress = {"total": len(sorted_nodes), "completed": 0}
 
         semaphore = asyncio.Semaphore(graph.max_parallel)
@@ -51,7 +51,7 @@ class StreamingExecutor:
                         await callback.on_node_error(node, exc, progress)
 
         while not all(state == "completed" for state in states.values()):
-            ready: List[Node] = []
+            ready: list[Node] = []
             for n in sorted_nodes:
                 if states[n.id] != "pending":
                     continue
@@ -69,7 +69,10 @@ class StreamingExecutor:
         return final
 
     async def _execute_node(
-        self, node: Node, results: Dict[str, Any], override_params: Dict[str, Any] | None = None
+        self,
+        node: Node,
+        results: dict[str, Any],
+        override_params: dict[str, Any] | None = None,
     ) -> Any:
         if node.type == "tool":
             params = override_params or node.spec.params

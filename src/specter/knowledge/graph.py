@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 import aiosqlite
 
@@ -14,7 +14,7 @@ class KnowledgeGraph:
 
     async def init(self) -> None:
         async with aiosqlite.connect(self.db_path) as db:
-            with open("migrations/001_init.sql", "r", encoding="utf-8") as f:
+            with open("migrations/001_init.sql", encoding="utf-8") as f:
                 await db.executescript(f.read())
             await db.commit()
 
@@ -23,13 +23,14 @@ class KnowledgeGraph:
         now = datetime.utcnow().isoformat()
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
-                "INSERT INTO entities (id, type, name, attributes, created_at) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO entities (id, type, name, attributes, created_at) "
+                "VALUES (?, ?, ?, ?, ?)",
                 (entity_id, "concept", statement[:128], json.dumps({"raw": statement}), now),
             )
             await db.commit()
         return entity_id
 
-    async def query(self, question: str, limit: int = 5) -> List[Dict[str, Any]]:
+    async def query(self, question: str, limit: int = 5) -> list[dict[str, Any]]:
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute(
                 "SELECT id, name, attributes FROM entities ORDER BY created_at DESC LIMIT ?",

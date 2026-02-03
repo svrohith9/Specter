@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import asyncio
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import JSONResponse
@@ -15,7 +14,7 @@ from .knowledge.graph import KnowledgeGraph
 
 class SimpleCallback(StreamCallback):
     def __init__(self) -> None:
-        self.events: list[Dict[str, Any]] = []
+        self.events: list[dict[str, Any]] = []
 
     async def on_node_start(self, node, progress):
         self.events.append({"event": "start", "node": node.id, "progress": progress.copy()})
@@ -53,7 +52,7 @@ async def health() -> JSONResponse:
 
 
 @app.post("/webhook/{channel}")
-async def receive_message(channel: str, payload: Dict[str, Any]) -> JSONResponse:
+async def receive_message(channel: str, payload: dict[str, Any]) -> JSONResponse:
     callback = SimpleCallback()
     result = await orchestrator.run(payload.get("text", ""), {"channel": channel}, callback)
     return JSONResponse({"result": result, "events": callback.events})

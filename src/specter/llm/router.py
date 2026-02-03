@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from litellm import acompletion
 
@@ -12,17 +12,17 @@ class LLMError(RuntimeError):
 
 
 class LLMRouter:
-    def __init__(self, routes: Optional[List[Dict[str, Any]]] = None) -> None:
+    def __init__(self, routes: list[dict[str, Any]] | None = None) -> None:
         self.routes = routes or settings.specter.llm.get("router", [])
 
-    async def generate(self, prompt: str, json_schema: Optional[Dict[str, Any]] = None) -> str:
+    async def generate(self, prompt: str, json_schema: dict[str, Any] | None = None) -> str:
         if not self.routes:
             return prompt
-        errors: List[str] = []
+        errors: list[str] = []
         for route in sorted(self.routes, key=lambda r: r.get("priority", 1)):
             try:
                 model = route["model"]
-                params: Dict[str, Any] = {
+                params: dict[str, Any] = {
                     "model": model,
                     "messages": [{"role": "user", "content": prompt}],
                     "timeout": route.get("timeout", 15),

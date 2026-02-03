@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from ..graph.compiler import IntentCompiler
 from ..graph.executor import StreamingExecutor
@@ -16,6 +16,6 @@ class Orchestrator:
         self.compiler = IntentCompiler()
         self.executor = StreamingExecutor(self.skills, self.healer)
 
-    async def run(self, user_input: str, context: Dict[str, Any], callback: StreamCallback) -> Any:
+    async def run(self, user_input: str, context: dict[str, Any], callback: StreamCallback) -> Any:
         graph = await self.compiler.compile(user_input, context)
         return await self.executor.execute(graph, callback)

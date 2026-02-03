@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any
 
 
 class Channel(ABC):
     @abstractmethod
-    async def receive(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    async def receive(self, payload: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError
 
     @abstractmethod
-    async def send(self, message: Dict[str, Any], context: Dict[str, Any]) -> None:
+    async def send(self, message: dict[str, Any], context: dict[str, Any]) -> None:
         raise NotImplementedError

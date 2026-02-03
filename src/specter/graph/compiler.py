@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel, Field
 
-from .models import ExecutionGraph, ExecutionPlan, Node
 from ..llm.router import LLMRouter
+from .models import ExecutionGraph, ExecutionPlan, Node
 
 
 class PlanSchema(BaseModel):
     intent_summary: str
     confidence: float = Field(ge=0.0, le=1.0)
-    nodes: List[Node]
+    nodes: list[Node]
 
 
 class IntentCompiler:
@@ -21,7 +21,7 @@ class IntentCompiler:
         "You are an execution planner. Convert user requests into JSON DAGs."
     )
 
-    async def compile(self, user_input: str, context: Dict[str, Any]) -> ExecutionGraph:
+    async def compile(self, user_input: str, context: dict[str, Any]) -> ExecutionGraph:
         router = LLMRouter()
         schema = PlanSchema.model_json_schema()
         prompt = self._build_prompt(user_input, context)
@@ -46,13 +46,13 @@ class IntentCompiler:
             )
             return ExecutionGraph(nodes=plan.nodes, max_parallel=1)
 
-    def _context_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _context_payload(self, context: dict[str, Any]) -> dict[str, Any]:
         return {
             "time": datetime.utcnow().isoformat(),
             **context,
         }
 
-    def _build_prompt(self, user_input: str, context: Dict[str, Any]) -> str:
+    def _build_prompt(self, user_input: str, context: dict[str, Any]) -> str:
         payload = self._context_payload(context)
         return (
             f"{self.SYSTEM_PROMPT}\n\n"

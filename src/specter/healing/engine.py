@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from ..graph.models import Node
 
@@ -13,7 +13,7 @@ class HealingEngine:
         "AuthenticationError": "credential_refresh",
     }
 
-    async def attempt_fix(self, node: Node, error: Exception) -> Dict[str, Any]:
+    async def attempt_fix(self, node: Node, error: Exception) -> dict[str, Any]:
         error_type = type(error).__name__
         strategy = self.FAILURE_PATTERNS.get(error_type, "escalate")
         return {
