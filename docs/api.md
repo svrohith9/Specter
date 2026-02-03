@@ -17,6 +17,8 @@
   - Returns recent memory summaries
 - `POST /knowledge/summarize?user_id=...`
   - Creates a new summary from recent facts
+- `POST /knowledge/cleanup?user_id=...`
+  - Clears expired entities and relations
 
 ## Skills
 - `POST /skills/forge`

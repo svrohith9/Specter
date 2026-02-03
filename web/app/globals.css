@@ -383,6 +383,32 @@ pre {
   color: var(--muted);
 }
 
+.memory {
+  display: grid;
+  gap: 12px;
+}
+
+.memory-search {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.entity-list {
+  display: grid;
+  gap: 8px;
+}
+
+.entity-row {
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: rgba(31, 111, 235, 0.08);
+}
+
+.entity-title {
+  font-weight: 600;
+}
+
 .trace {
   display: grid;
   gap: 12px;

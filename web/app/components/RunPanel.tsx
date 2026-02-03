@@ -40,6 +40,14 @@ export default function RunPanel() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [view, setView] = useState<"summary" | "events">("summary");
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [summaries, setSummaries] = useState<
+    { id: string; summary: string; source_count: number; created_at: string }[]
+  >([]);
+  const [memoryQuery, setMemoryQuery] = useState("");
+  const [entities, setEntities] = useState<
+    { id: string; type: string; name: string; relations?: { type: string; target_id: string }[] }[]
+  >([]);
+  const [memoryBusy, setMemoryBusy] = useState(false);
   const inFlight = useRef(false);
 
   async function loadMeta() {
@@ -71,8 +79,41 @@ export default function RunPanel() {
     }
   }
 
+  async function loadSummaries() {
+    try {
+      const resp = await fetch("/api/memory/summary");
+      const data = await resp.json();
+      setSummaries(data.summaries ?? []);
+    } catch {
+      setSummaries([]);
+    }
+  }
+
+  async function createSummary() {
+    setMemoryBusy(true);
+    try {
+      await fetch("/api/memory/summarize", { method: "POST" });
+      await loadSummaries();
+    } finally {
+      setMemoryBusy(false);
+    }
+  }
+
+  async function searchEntities() {
+    if (!memoryQuery.trim()) return;
+    setMemoryBusy(true);
+    try {
+      const resp = await fetch(`/api/memory/entities?q=${encodeURIComponent(memoryQuery)}`);
+      const data = await resp.json();
+      setEntities(data.entities ?? []);
+    } finally {
+      setMemoryBusy(false);
+    }
+  }
+
   useEffect(() => {
     loadMeta();
+    loadSummaries();
   }, []);
 
   useEffect(() => {
@@ -305,6 +346,51 @@ export default function RunPanel() {
                   </li>
                 ))}
           </ul>
+        </div>
+        <div className="card memory">
+          <div className="row">
+            <h3>Memory</h3>
+            <button className="ghost" onClick={createSummary} disabled={memoryBusy}>
+              {memoryBusy ? "Working…" : "Summarize"}
+            </button>
+          </div>
+          <div className="muted">Recent summaries</div>
+          <ul className="list">
+            {summaries.length === 0 ? (
+              <li className="muted">No summaries yet.</li>
+            ) : (
+              summaries.map((s) => (
+                <li key={s.id}>
+                  <div className="muted">{s.created_at}</div>
+                  <div>{s.summary}</div>
+                </li>
+              ))
+            )}
+          </ul>
+          <div className="memory-search">
+            <input
+              className="input"
+              value={memoryQuery}
+              onChange={(e) => setMemoryQuery(e.target.value)}
+              placeholder="Search entities"
+            />
+            <button className="ghost" onClick={searchEntities} disabled={memoryBusy}>
+              Search
+            </button>
+          </div>
+          {entities.length > 0 && (
+            <div className="entity-list">
+              {entities.map((ent) => (
+                <div key={ent.id} className="entity-row">
+                  <div className="entity-title">{ent.name}</div>
+                  <div className="muted">{ent.type}</div>
+                  {ent.relations?.length ? (
+                    <div className="muted">Relations: {ent.relations.length}</div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="card">
           <h3>Playbooks</h3>

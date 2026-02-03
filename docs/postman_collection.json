@@ -240,6 +240,30 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "Knowledge Cleanup",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/knowledge/cleanup?user_id=local",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "knowledge",
+            "cleanup?user_id=local"
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "variable": [

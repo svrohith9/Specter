@@ -167,6 +167,14 @@ async def create_summary(user_id: str) -> SummaryCreateResponse:
     return SummaryCreateResponse(summary=summary)
 
 
+@app.post("/knowledge/cleanup")
+async def cleanup_memory(user_id: str) -> JSONResponse:
+    agent = get_agent(user_id)
+    await agent.init()
+    await agent.kg.cleanup_expired()
+    return JSONResponse({"status": "ok"})
+
+
 @app.get("/agents")
 async def list_agents() -> AgentListResponse:
     agents = []
