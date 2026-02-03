@@ -64,6 +64,37 @@ class KnowledgeGraph:
                 {"id": r[0], "name": r[1], "attributes": json.loads(r[2] or "{}")} for r in rows
             ]
 
+    async def query_entities(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """
+                SELECT id, type, name FROM entities
+                WHERE name LIKE ?
+                ORDER BY created_at DESC LIMIT ?
+                """,
+                (f"%{query}%", limit),
+            )
+            rows = await cursor.fetchall()
+            results: list[dict[str, Any]] = []
+            for entity_id, ent_type, name in rows:
+                rel_cursor = await db.execute(
+                    """
+                    SELECT relation_type, target_id FROM relationships
+                    WHERE source_id = ? LIMIT 5
+                    """,
+                    (entity_id,),
+                )
+                rels = await rel_cursor.fetchall()
+                results.append(
+                    {
+                        "id": entity_id,
+                        "type": ent_type,
+                        "name": name,
+                        "relations": [{"type": r[0], "target_id": r[1]} for r in rels],
+                    }
+                )
+            return results
+
     def _extract_entities(self, text: str) -> list[dict[str, str]]:
         entities: list[dict[str, str]] = []
         for email in re.findall(r"[\\w\\.-]+@[\\w\\.-]+", text):

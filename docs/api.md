@@ -11,6 +11,8 @@
 ## Knowledge
 - `GET /knowledge/search?q=...&user_id=...`
   - Returns recent knowledge graph results
+- `GET /knowledge/entities?q=...&user_id=...`
+  - Returns entity nodes and relation hints
 
 ## Skills
 - `POST /skills/forge`

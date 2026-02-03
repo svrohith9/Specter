@@ -4,24 +4,42 @@
 ![Release](https://github.com/svrohith9/Specter/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-Specter is an execution-first autonomous agent that turns intent into parallelized action. It plans tasks as DAGs, executes them, self-heals when possible, and persists knowledge and execution history locally.
+Specter is an execution-first autonomous agent that turns intent into parallelized action. It compiles tasks into DAGs, executes in parallel, self-heals where possible, and persists knowledge and execution history locally.
 
-## What It Does
-- Converts natural language requests into execution graphs
-- Runs tasks in parallel where possible
-- Persists every execution for replay and auditing
-- Stores knowledge locally in SQLite
-- Exposes a tool gateway with policy controls
+## Product Snapshot
+![Specter control plane](docs/specter-control-plane-annotated.svg)
+
+## Why Specter
+- Execution graphs instead of linear task chains
+- Local-first SQLite persistence with replayable traces
+- Deterministic tool gateway with policy controls
+- Self-healing for common failures
+- Lightweight deployment for laptops, edge boxes, or small VPS
+
+## Core Capabilities
+- Intent → execution graph compilation
+- Parallel tool execution with traceable events
+- Knowledge graph memory (SQLite)
+- Skill registry and tool invocation endpoints
+- Execution replay and audit trail
+
+## Use Cases
+- Launch and project planning runbooks
+- Data gathering and synthesis with tools
+- Task coordination with deterministic traces
+- Lightweight automation without external databases
+
+## Project Tags
+- autonomous-agents
+- execution-graphs
+- knowledge-graph
+- local-first
+- fastapi
+- sqlite
 
 ## Architecture
 ![Specter architecture](docs/architecture.svg)
 ![Specter pipeline](docs/pipeline.svg)
-
-## Product Snapshot
-![Specter UI](docs/specter-ui.png)
-
-## Why Specter
-Specter focuses on minimal, reliable automation rather than heavy frameworks. It is local-first, fast to deploy, and built to provide execution traceability rather than opaque chat logs.
 
 ## Quick Start
 
@@ -63,13 +81,15 @@ docker-compose up --build
 - `GET /ui` minimal local dashboard
 
 ## Configuration
-- `config.yaml` controls execution, LLM routing, and channel settings.
-- `.env.example` shows required environment variables.
+- `config.yaml` controls execution, LLM routing, and channel settings
+- `.env.example` shows required environment variables
 
 ## Docs
 - `docs/architecture.md`
 - `docs/api.md`
+- `docs/about.md`
 - `docs/deployment.md`
+- `docs/pr-style.md`
 - `docs/skills.md`
 - `docs/roadmap.md`
 - `docs/contributing-style.md`

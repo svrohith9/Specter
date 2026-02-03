@@ -66,6 +66,10 @@ class SkillListResponse(BaseModel):
     skills: list[str]
 
 
+class EntityQueryResponse(BaseModel):
+    entities: list[dict[str, Any]]
+
+
 configure_logging()
 settings.load_yaml()
 
@@ -116,6 +120,14 @@ async def search_knowledge(q: str, user_id: str) -> JSONResponse:
     await agent.init()
     result = await agent.kg.query(q)
     return JSONResponse({"user_id": user_id, "results": result})
+
+
+@app.get("/knowledge/entities")
+async def search_entities(q: str, user_id: str) -> EntityQueryResponse:
+    agent = get_agent(user_id)
+    await agent.init()
+    entities = await agent.kg.query_entities(q)
+    return EntityQueryResponse(entities=entities)
 
 
 @app.post("/skills/forge")

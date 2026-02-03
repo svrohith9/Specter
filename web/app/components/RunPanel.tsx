@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Execution = {
   id: string;
@@ -25,18 +25,35 @@ export default function RunPanel() {
   const [last, setLast] = useState<RunResult | null>(null);
   const [tools, setTools] = useState<string[]>([]);
   const [executions, setExecutions] = useState<Execution[]>([]);
+  const [backendStatus, setBackendStatus] = useState("ok");
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [view, setView] = useState<"summary" | "events">("summary");
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const inFlight = useRef(false);
 
   async function loadMeta() {
-    const [toolsResp, execResp] = await Promise.all([
-      fetch("/api/tools"),
-      fetch("/api/executions")
-    ]);
-    const toolsJson = await toolsResp.json();
-    const execJson = await execResp.json();
-    setTools(toolsJson.tools ?? []);
-    setExecutions(execJson.executions ?? []);
+    if (inFlight.current) return;
+    if (typeof document !== "undefined" && document.hidden) return;
+    inFlight.current = true;
+    try {
+      const resp = await fetch("/api/meta");
+      const meta = await resp.json();
+      if (meta.errors?.tools || meta.errors?.executions) {
+        setBackendStatus("offline");
+        setTools([`Backend offline (${meta.errors.tools})`]);
+      } else {
+        setBackendStatus("ok");
+        setTools(meta.tools ?? []);
+      }
+      if (meta.errors?.executions) {
+        setExecutions([]);
+      } else {
+        setExecutions(meta.executions ?? []);
+      }
+      setLastUpdated(new Date().toLocaleTimeString());
+    } finally {
+      inFlight.current = false;
+    }
   }
 
   useEffect(() => {
@@ -45,7 +62,7 @@ export default function RunPanel() {
 
   useEffect(() => {
     if (!autoRefresh) return;
-    const id = setInterval(() => loadMeta(), 5000);
+    const id = setInterval(() => loadMeta(), 10000);
     return () => clearInterval(id);
   }, [autoRefresh]);
 
@@ -68,32 +85,71 @@ export default function RunPanel() {
   }
 
   const events = useMemo(() => last?.events ?? [], [last]);
+  const loadingTools = tools.length === 0;
+  const loadingExecs = executions.length === 0;
+
+  const activeCount = executions.filter((ex) => ex.status === "running").length;
+  const completedCount = executions.filter((ex) => ex.status === "completed").length;
 
   return (
     <div className="shell">
       <header className="hero">
-        <div>
-          <div className="kicker">Specter Control Plane</div>
+        <div className="hero-copy">
+          <div className="kicker">Specter Command Center</div>
           <h1>
-            Command the execution layer.
-            <span>Ship outcomes, not prompts.</span>
+            Orchestrate execution.
+            <span>Move from intent to impact.</span>
           </h1>
           <p>
-            A local-first autonomous agent that turns intent into parallel execution.
+            Specter is a local-first autonomous agent that compiles tasks into parallel
+            execution graphs, keeps a traceable audit trail, and responds with
+            deterministic outputs.
           </p>
         </div>
-        <div className="badge">
-          <div className="badge-title">Status</div>
-          <div className="badge-value">Live</div>
-          <div className="badge-sub">Port 8000</div>
+        <div className="hero-status">
+          <div className="badge">
+            <div className="badge-title">Status</div>
+            <div className={`badge-value ${backendStatus}`}>
+              {backendStatus === "ok" ? "Live" : "Offline"}
+            </div>
+            <div className="badge-sub">Port 8000</div>
+          </div>
+          <div className="badge ghosted">
+            <div className="badge-title">Agent</div>
+            <div className="badge-value">Specter-1</div>
+            <div className="badge-sub">Local runtime</div>
+          </div>
         </div>
       </header>
 
-      <section className="control">
-        <div className="panel">
+      <section className="stats">
+        <div className="stat-card">
+          <div className="stat-label">Active runs</div>
+          <div className="stat-value">{activeCount}</div>
+          <div className="stat-meta">Execution graph nodes in flight</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Completed</div>
+          <div className="stat-value">{completedCount}</div>
+          <div className="stat-meta">Successful task completions</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Tools online</div>
+          <div className="stat-value">{tools.length}</div>
+          <div className="stat-meta">Skill registry footprint</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Last sync</div>
+          <div className="stat-value">{lastUpdated ?? "—"}</div>
+          <div className="stat-meta">Auto refresh {autoRefresh ? "enabled" : "paused"}</div>
+        </div>
+      </section>
+
+      <section className="workspace">
+        <div className="panel command">
           <div className="panel-head">
             <div>
-              <h2>Run a task</h2>
+              <h2>Command deck</h2>
               <p>Natural language in. Deterministic execution out.</p>
             </div>
             <div className="chip">Agent: {agent}</div>
@@ -114,13 +170,24 @@ export default function RunPanel() {
               {busy ? "Executing…" : "Execute"}
             </button>
           </div>
+          <div className="panel-foot">
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+              />
+              <span>Auto refresh</span>
+            </label>
+            <button className="ghost" onClick={loadMeta}>Refresh now</button>
+          </div>
         </div>
 
         <div className="panel result">
           <div className="panel-head">
             <div>
-              <h2>Latest output</h2>
-              <p>Execution trace and result payload.</p>
+              <h2>Live execution</h2>
+              <p>Trace graph events and final payloads.</p>
             </div>
             <div className="row">
               <button
@@ -135,7 +202,6 @@ export default function RunPanel() {
               >
                 Trace
               </button>
-              <button className="ghost" onClick={loadMeta}>Refresh</button>
             </div>
           </div>
           {view === "summary" ? (
@@ -163,51 +229,51 @@ export default function RunPanel() {
 
       <section className="grid">
         <div className="card">
-          <div className="row">
-            <h3>Tools</h3>
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-              />
-              <span>Auto refresh</span>
-            </label>
-          </div>
+          <h3>Tool registry</h3>
+          <div className="muted">Available skills in this runtime</div>
           <ul className="list">
-            {tools.map((tool) => (
-              <li key={tool}>{tool}</li>
-            ))}
+            {loadingTools
+              ? [1, 2, 3].map((i) => <li key={i} className="skeleton" />)
+              : tools.map((tool) => <li key={tool}>{tool}</li>)}
           </ul>
         </div>
         <div className="card">
-          <h3>Executions</h3>
+          <h3>Execution timeline</h3>
+          <div className="muted">Recent task runs and status</div>
           <ul className="list">
-            {executions.map((ex) => (
-              <li key={ex.id}>
-                <div className="row">
-                  <span className="mono">{ex.id}</span>
-                  <span className={`status ${ex.status}`}>{ex.status}</span>
-                </div>
-                <div className="muted">{ex.intent}</div>
-              </li>
-            ))}
+            {loadingExecs
+              ? [1, 2, 3].map((i) => <li key={i} className="skeleton" />)
+              : executions.map((ex) => (
+                  <li key={ex.id}>
+                    <div className="row">
+                      <span className="mono">{ex.id}</span>
+                      <span className={`status ${ex.status}`}>{ex.status}</span>
+                    </div>
+                    <div className="muted">{ex.intent}</div>
+                  </li>
+                ))}
           </ul>
         </div>
         <div className="card">
-          <h3>Playbook</h3>
-          <div className="muted">Suggested prompts</div>
+          <h3>Playbooks</h3>
+          <div className="muted">Suggested operator prompts</div>
           <div className="playbook">
-            <button onClick={() => setText("Summarize today’s tasks and draft a plan")}
-              className="ghost">
+            <button
+              onClick={() => setText("Summarize today’s tasks and draft a plan")}
+              className="ghost"
+            >
               Daily planning
             </button>
-            <button onClick={() => setText("Draft a Q2 product launch checklist")}
-              className="ghost">
+            <button
+              onClick={() => setText("Draft a Q2 product launch checklist")}
+              className="ghost"
+            >
               Launch checklist
             </button>
-            <button onClick={() => setText("Create a sales follow-up sequence for new leads")}
-              className="ghost">
+            <button
+              onClick={() => setText("Create a sales follow-up sequence for new leads")}
+              className="ghost"
+            >
               Sales follow-up
             </button>
           </div>

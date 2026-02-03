@@ -14,12 +14,16 @@ class SkillManager:
         self._skills: dict[str, Any] = {}
         self.register("calculate", calculate)
         self.register("web_fetch", web_fetch)
+        self._audit_hook: callable | None = None
 
     def register(self, name: str, func: Any) -> None:
         self._skills[name] = func
 
     def list(self) -> list[str]:
         return sorted(self._skills.keys())
+
+    def set_audit_hook(self, hook: callable | None) -> None:
+        self._audit_hook = hook
 
     async def load_from_db(self, db_path: str) -> None:
         async with aiosqlite.connect(db_path) as db:
@@ -72,5 +76,7 @@ class SkillManager:
     async def execute(self, name: str, params: dict[str, Any]) -> Any:
         if name not in self._skills:
             raise ValueError(f"Unknown skill: {name}")
+        if self._audit_hook:
+            await self._audit_hook("tool_call", {"tool": name, "params": params})
         fn = self._skills[name]
         return await fn(**params)

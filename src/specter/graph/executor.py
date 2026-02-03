@@ -18,7 +18,12 @@ class StreamingExecutor:
         self.llm = LLMRouter()
         self.policy = policy
 
-    async def execute(self, graph: ExecutionGraph, callback: StreamCallback) -> Any:
+    async def execute(
+        self,
+        graph: ExecutionGraph,
+        callback: StreamCallback,
+        audit: callable | None = None,
+    ) -> Any:
         sorted_nodes = graph.topological_sort()
         states = {n.id: "pending" for n in graph.nodes}
         results: dict[str, Any] = {}
@@ -32,7 +37,7 @@ class StreamingExecutor:
                 await callback.on_node_start(node, progress)
                 try:
                     result = await asyncio.wait_for(
-                        self._execute_node(node, results), timeout=node.timeout_seconds
+                        self._execute_node(node, results, audit), timeout=node.timeout_seconds
                     )
                     states[node.id] = "completed"
                     results[node.id] = result
@@ -45,7 +50,7 @@ class StreamingExecutor:
                     if node.error_strategy == "retry":
                         try:
                             result = await asyncio.wait_for(
-                                self._execute_node(node, results), timeout=node.timeout_seconds
+                                self._execute_node(node, results, audit), timeout=node.timeout_seconds
                             )
                             states[node.id] = "completed"
                             results[node.id] = result
@@ -56,7 +61,9 @@ class StreamingExecutor:
                     if node.error_strategy == "heal":
                         fix = await self.healer.attempt_fix(node, exc)
                         if fix.get("success"):
-                            healed = await self._execute_node(node, results, fix.get("new_params"))
+                            healed = await self._execute_node(
+                                node, results, audit, fix.get("new_params")
+                            )
                             states[node.id] = "completed"
                             results[node.id] = healed
                             progress["completed"] += 1
@@ -87,11 +94,17 @@ class StreamingExecutor:
         self,
         node: Node,
         results: dict[str, Any],
+        audit: callable | None = None,
         override_params: dict[str, Any] | None = None,
     ) -> Any:
         if node.type == "tool":
             params = override_params or node.spec.params
-            self.policy.check(node.spec.tool_name or "")
+            try:
+                self.policy.check(node.spec.tool_name or "")
+            except Exception as exc:  # noqa: BLE001
+                if audit:
+                    await audit("policy_block", {"tool": node.spec.tool_name, "error": str(exc)})
+                raise
             return await self.skills.execute(node.spec.tool_name or "", params)
         if node.type == "llm":
             prompt = node.spec.prompt or ""

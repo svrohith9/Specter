@@ -28,8 +28,14 @@ class Orchestrator:
             intent=user_input,
             graph=graph.model_dump(),
         )
+
+        async def audit(action: str, details: dict[str, Any]) -> None:
+            await self.store.add_audit(exec_id, action, details)
+
+        self.skills.set_audit_hook(audit)
+
         try:
-            result = await self.executor.execute(graph, callback)
+            result = await self.executor.execute(graph, callback, audit=audit)
             await self.store.complete_execution(exec_id, result)
             return {"execution_id": exec_id, "result": result}
         except Exception as exc:  # noqa: BLE001

@@ -46,6 +46,7 @@ class IntentCompiler:
             raw = await router.generate(prompt, json_schema=schema, temperature=temperature)
             data = json.loads(raw)
             plan = PlanSchema(**data)
+            plan = self._normalize_plan(plan)
             self._validate_plan(plan)
             return ExecutionGraph(nodes=plan.nodes, max_parallel=10)
         except Exception:
@@ -86,6 +87,19 @@ class IntentCompiler:
                 raise ValueError("Tool node missing tool_name")
         self._assert_acyclic(plan.nodes)
 
+    def _normalize_plan(self, plan: PlanSchema) -> PlanSchema:
+        # Ensure deterministic node ids if missing or empty
+        normalized: list[Node] = []
+        for idx, node in enumerate(plan.nodes, start=1):
+            if not node.id:
+                node.id = f"node_{idx}"
+            normalized.append(node)
+        return PlanSchema(
+            intent_summary=plan.intent_summary,
+            confidence=plan.confidence,
+            nodes=normalized,
+        )
+
     def _assert_acyclic(self, nodes: list[Node]) -> None:
         deps = {n.id: set(n.deps) for n in nodes}
         visited: set[str] = set()
@@ -116,7 +130,7 @@ class IntentCompiler:
                 error_strategy="heal",
             )
             return ExecutionGraph(nodes=[node], max_parallel=1)
-        if re.fullmatch(r"[0-9+\\-*/().\\s]+", text):
+        if re.fullmatch(r"[0-9+\-*/().\s]+", text):
             node = Node(
                 id="tool_1",
                 type="tool",
