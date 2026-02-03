@@ -3,6 +3,9 @@
 ## Overview
 Specter is an execution-first autonomous agent that converts user requests into parallel execution graphs (DAGs), runs them with a streaming executor, heals failures, and stores structured memory in a SQLite knowledge graph. It is local-first and minimizes external dependencies.
 
+## Pipeline Diagram
+![Specter pipeline](pipeline.svg)
+
 ## Core flow
 1. User message enters via a channel (webhook, WebSocket)
 2. Intent compiler generates an execution DAG

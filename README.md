@@ -1,6 +1,7 @@
 # Specter
 
 ![CI](https://github.com/svrohith9/Specter/actions/workflows/ci.yml/badge.svg)
+![Release](https://github.com/svrohith9/Specter/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 Execution-first autonomous agent with parallel DAG execution, self-healing, structured memory, and presence intelligence.
@@ -10,6 +11,7 @@ Production-oriented core is live. The system persists executions, supports a too
 
 ## Architecture
 ![Specter architecture](docs/architecture.svg)
+![Specter pipeline](docs/pipeline.svg)
 
 ## Features
 - Parallel execution graphs (DAG-based)
