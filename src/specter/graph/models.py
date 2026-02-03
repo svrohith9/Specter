@@ -54,5 +54,5 @@ class ExecutionGraph(BaseModel):
         return ordered
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ExecutionGraph":
+    def from_dict(cls, data: dict) -> ExecutionGraph:
         return cls.model_validate(data)

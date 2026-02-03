@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from ..core.security import ToolPolicy, load_tool_policy
+from ..core.security import ToolPolicy
 from ..healing.engine import HealingEngine
 from ..llm.router import LLMRouter
 from ..skills.manager import SkillManager

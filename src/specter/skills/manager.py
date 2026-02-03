@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import aiosqlite
-import json
 
 from .builtin.calc import calculate
 from .builtin.web import web_fetch
@@ -25,7 +25,9 @@ class SkillManager:
             for name, code in rows:
                 await self._register_from_code(name, code)
 
-    async def persist_template_skill(self, db_path: str, name: str, payload: dict[str, Any]) -> None:
+    async def persist_template_skill(
+        self, db_path: str, name: str, payload: dict[str, Any]
+    ) -> None:
         async with aiosqlite.connect(db_path) as db:
             await db.execute(
                 """

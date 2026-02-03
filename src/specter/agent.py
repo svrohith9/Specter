@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .brain.orchestrator import Orchestrator
 from .config import AgentConfig, SpecterConfig
 from .core.security import ToolPolicy, load_tool_policy
 from .knowledge.graph import KnowledgeGraph
 from .skills.forge import SkillForge
 from .storage import ExecutionStore
-from .brain.orchestrator import Orchestrator
 
 
 @dataclass
