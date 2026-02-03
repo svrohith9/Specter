@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..config import settings
+from ..config import SecurityConfig
 
 
 @dataclass
@@ -17,6 +17,5 @@ class ToolPolicy:
             raise PermissionError(f"Tool not in allowlist: {tool_name}")
 
 
-def load_tool_policy() -> ToolPolicy:
-    security = settings.specter.security
+def load_tool_policy(security: SecurityConfig) -> ToolPolicy:
     return ToolPolicy(allowed=set(security.allowed_tools), blocked=set(security.blocked_tools))

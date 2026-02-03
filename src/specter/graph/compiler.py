@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from ..config import settings
 from ..llm.router import LLMRouter
 from .models import ExecutionGraph, ExecutionPlan, Node
 
@@ -26,7 +27,8 @@ class IntentCompiler:
         schema = PlanSchema.model_json_schema()
         prompt = self._build_prompt(user_input, context)
         try:
-            raw = await router.generate(prompt, json_schema=schema)
+            temperature = 0.1 if settings.specter.execution.deterministic_planning else 0.3
+            raw = await router.generate(prompt, json_schema=schema, temperature=temperature)
             data = json.loads(raw)
             plan = PlanSchema(**data)
             return ExecutionGraph(nodes=plan.nodes, max_parallel=10)

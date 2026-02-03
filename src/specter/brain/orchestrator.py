@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..core.security import ToolPolicy
 from ..graph.compiler import IntentCompiler
 from ..graph.executor import StreamingExecutor
 from ..graph.streaming import StreamCallback
@@ -11,11 +12,11 @@ from ..storage import ExecutionStore
 
 
 class Orchestrator:
-    def __init__(self, store: ExecutionStore) -> None:
+    def __init__(self, store: ExecutionStore, policy: ToolPolicy) -> None:
         self.skills = SkillManager()
         self.healer = HealingEngine()
         self.compiler = IntentCompiler()
-        self.executor = StreamingExecutor(self.skills, self.healer)
+        self.executor = StreamingExecutor(self.skills, self.healer, policy)
         self.store = store
 
     async def run(

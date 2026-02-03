@@ -17,6 +17,7 @@ class ExecutionConfig(BaseModel):
     timeout_seconds: int = 300
     healing_attempts: int = 3
     stream_partial: bool = True
+    deterministic_planning: bool = True
 
 
 class KnowledgeConfig(BaseModel):
@@ -54,14 +55,22 @@ class SecurityConfig(BaseModel):
     max_memory_mb: int = 256
 
 
+class AgentConfig(BaseModel):
+    db_path: str | None = None
+    security: SecurityConfig = Field(default_factory=SecurityConfig)
+
+
 class SpecterConfig(BaseModel):
     name: str = "Specter"
     autonomy_level: str = "high"
+    default_agent: str = "default"
+    data_dir: str = "./data"
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)
     knowledge: KnowledgeConfig = Field(default_factory=KnowledgeConfig)
     channels: ChannelsConfig = Field(default_factory=ChannelsConfig)
     llm: dict[str, list[LLMRoute]] = Field(default_factory=dict)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
+    agents: dict[str, AgentConfig] = Field(default_factory=dict)
 
 
 class Settings(BaseSettings):

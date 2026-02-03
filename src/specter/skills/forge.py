@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from __future__ import annotations
-
 import re
 from typing import Any, Callable
 
@@ -11,7 +9,10 @@ class SkillForge:
         self._register = register
 
     async def forge(
-        self, description: str, examples: list[dict[str, Any]] | None = None
+        self,
+        description: str,
+        examples: list[dict[str, Any]] | None = None,
+        persist: Callable[[str, dict[str, Any]], Any] | None = None,
     ) -> dict[str, Any]:
         name = self._slugify(description)
 
@@ -23,6 +24,12 @@ class SkillForge:
             }
 
         self._register(name, skill)
+        payload = {
+            "description": description,
+            "examples": examples or [],
+        }
+        if persist:
+            await persist(name, payload)
         return {
             "created": True,
             "skill": {

@@ -52,3 +52,7 @@ class ExecutionGraph(BaseModel):
                     if indeg[n.id] == 0:
                         queue.append(n.id)
         return ordered
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ExecutionGraph":
+        return cls.model_validate(data)

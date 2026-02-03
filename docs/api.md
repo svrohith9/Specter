@@ -19,10 +19,16 @@
 ## Tools
 - `POST /tools/invoke`
   - Invoke a registered tool (e.g., `calculate`, `web_fetch`)
+- `GET /tools`
+  - List registered tools
 
 ## Executions
 - `GET /executions/{id}`
   - Stub execution trace
+- `GET /executions`
+  - List recent executions
+- `POST /executions/{id}/replay`
+  - Replay a stored execution graph
 
 ## Healing
 - `POST /healing/override`
@@ -31,3 +37,7 @@
 ## Streaming
 - `WS /ws/{user_id}`
   - Real-time execution streaming
+
+## UI
+- `GET /ui`
+  - Minimal local dashboard

@@ -15,7 +15,12 @@ class LLMRouter:
     def __init__(self, routes: list[dict[str, Any]] | None = None) -> None:
         self.routes = routes or settings.specter.llm.get("router", [])
 
-    async def generate(self, prompt: str, json_schema: dict[str, Any] | None = None) -> str:
+    async def generate(
+        self,
+        prompt: str,
+        json_schema: dict[str, Any] | None = None,
+        temperature: float | None = None,
+    ) -> str:
         if not self.routes:
             return prompt
         errors: list[str] = []
@@ -27,6 +32,8 @@ class LLMRouter:
                     "messages": [{"role": "user", "content": prompt}],
                     "timeout": route.get("timeout", 15),
                 }
+                if temperature is not None:
+                    params["temperature"] = temperature
                 if json_schema:
                     params["response_format"] = {
                         "type": "json_schema",

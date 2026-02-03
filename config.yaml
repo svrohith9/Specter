@@ -1,12 +1,15 @@
 specter:
   name: "Specter"
   autonomy_level: "high"
+  default_agent: "default"
+  data_dir: "./data"
 
   execution:
     max_parallel: 10
     timeout_seconds: 300
     healing_attempts: 3
     stream_partial: true
+    deterministic_planning: true
 
   knowledge:
     graph_pruning: true
@@ -53,3 +56,7 @@ specter:
     blocked_tools: []
     max_execution_time: 30
     max_memory_mb: 256
+
+  agents:
+    default:
+      db_path: "./data/specter.db"

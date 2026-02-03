@@ -82,6 +82,29 @@ class ExecutionStore:
                 "completed_at": row[7],
             }
 
+    async def list_executions(self, limit: int = 20) -> list[dict[str, Any]]:
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """
+                SELECT id, intent, status, started_at, completed_at
+                FROM executions
+                ORDER BY started_at DESC
+                LIMIT ?
+                """,
+                (limit,),
+            )
+            rows = await cursor.fetchall()
+            return [
+                {
+                    "id": r[0],
+                    "intent": r[1],
+                    "status": r[2],
+                    "started_at": r[3],
+                    "completed_at": r[4],
+                }
+                for r in rows
+            ]
+
     async def add_audit(self, exec_id: str, action: str, details: dict[str, Any]) -> None:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(

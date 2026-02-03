@@ -3,17 +3,15 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi.responses import JSONResponse
 from fastapi import FastAPI, WebSocket
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from .brain.orchestrator import Orchestrator
+from .agent import AgentRuntime, build_agent_runtime
 from .config import settings
 from .core.logging import configure_logging
+from .graph.models import ExecutionGraph
 from .graph.streaming import StreamCallback
-from .knowledge.graph import KnowledgeGraph
-from .skills.forge import SkillForge
-from .storage import ExecutionStore
 
 
 class SimpleCallback(StreamCallback):
@@ -50,19 +48,33 @@ class ToolInvokeRequest(BaseModel):
     params: dict[str, Any] = {}
 
 
+class SkillInstallRequest(BaseModel):
+    name: str
+    description: str
+
+
+class ToolListResponse(BaseModel):
+    tools: list[str]
+
+
 configure_logging()
 settings.load_yaml()
 
-db_path = "./data/specter.db"
-store = ExecutionStore(db_path=db_path)
-orchestrator = Orchestrator(store=store)
-kg = KnowledgeGraph(db_path=db_path)
-forge = SkillForge(orchestrator.skills.register)
+_agents: dict[str, AgentRuntime] = {}
+
+
+def get_agent(agent_id: str | None) -> AgentRuntime:
+    resolved = agent_id or settings.specter.default_agent
+    if resolved not in _agents:
+        _agents[resolved] = build_agent_runtime(settings.specter, resolved)
+    return _agents[resolved]
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    await kg.init()
+    for agent_id in settings.specter.agents.keys() or [settings.specter.default_agent]:
+        runtime = get_agent(agent_id)
+        await runtime.init()
     yield
 
 
@@ -78,43 +90,100 @@ async def health() -> JSONResponse:
 async def receive_message(channel: str, payload: dict[str, Any]) -> JSONResponse:
     callback = SimpleCallback()
     user_text = payload.get("text", "")
-    await kg.add_fact(user_text, confidence=0.6)
-    result = await orchestrator.run(
-        user_text, {"channel": channel, "user_id": payload.get("user_id", "local")}, callback
+    agent = get_agent(payload.get("agent_id"))
+    await agent.init()
+    await agent.kg.add_fact(user_text, confidence=0.6)
+    result = await agent.orchestrator.run(
+        user_text,
+        {"channel": channel, "user_id": payload.get("user_id", "local")},
+        callback,
     )
     return JSONResponse({"result": result, "events": callback.events})
 
 
 @app.get("/knowledge/search")
 async def search_knowledge(q: str, user_id: str) -> JSONResponse:
-    result = await kg.query(q)
+    agent = get_agent(user_id)
+    await agent.init()
+    result = await agent.kg.query(q)
     return JSONResponse({"user_id": user_id, "results": result})
 
 
 @app.post("/skills/forge")
 async def create_skill(payload: SkillForgeRequest) -> JSONResponse:
-    result = await forge.forge(payload.description)
+    agent = get_agent(None)
+    await agent.init()
+    result = await agent.forge.forge(
+        payload.description,
+        persist=lambda name, data: agent.orchestrator.skills.persist_template_skill(
+            agent.store.db_path, name, data
+        ),
+    )
     return JSONResponse(result)
 
 
 @app.post("/tools/invoke")
 async def invoke_tool(payload: ToolInvokeRequest) -> JSONResponse:
-    result = await orchestrator.skills.execute(payload.tool_name, payload.params)
+    agent = get_agent(None)
+    await agent.init()
+    result = await agent.orchestrator.skills.execute(payload.tool_name, payload.params)
     return JSONResponse(result)
+
+
+@app.get("/tools")
+async def list_tools() -> ToolListResponse:
+    agent = get_agent(None)
+    return ToolListResponse(tools=sorted(agent.orchestrator.skills._skills.keys()))
+
+
+@app.post("/skills/install")
+async def install_skill(payload: SkillInstallRequest) -> JSONResponse:
+    agent = get_agent(None)
+    await agent.init()
+    await agent.orchestrator.skills.persist_template_skill(
+        agent.store.db_path, payload.name, {"description": payload.description}
+    )
+    await agent.orchestrator.skills.load_from_db(agent.store.db_path)
+    return JSONResponse({"installed": True, "name": payload.name})
 
 
 @app.get("/executions/{exec_id}")
 async def get_execution(exec_id: str) -> JSONResponse:
-    result = await store.get_execution(exec_id)
+    agent = get_agent(None)
+    await agent.init()
+    result = await agent.store.get_execution(exec_id)
     if result is None:
         return JSONResponse({"error": "not_found", "id": exec_id}, status_code=404)
     return JSONResponse(result)
 
 
+@app.get("/executions")
+async def list_executions() -> JSONResponse:
+    agent = get_agent(None)
+    await agent.init()
+    result = await agent.store.list_executions()
+    return JSONResponse({"executions": result})
+
+
+@app.post("/executions/{exec_id}/replay")
+async def replay_execution(exec_id: str) -> JSONResponse:
+    agent = get_agent(None)
+    await agent.init()
+    existing = await agent.store.get_execution(exec_id)
+    if existing is None:
+        return JSONResponse({"error": "not_found", "id": exec_id}, status_code=404)
+    graph = ExecutionGraph.from_dict(existing["graph"])
+    callback = SimpleCallback()
+    result = await agent.orchestrator.executor.execute(graph, callback)
+    return JSONResponse({"replayed": True, "result": result, "events": callback.events})
+
+
 @app.post("/healing/override")
 async def manual_heal(payload: HealingOverrideRequest) -> JSONResponse:
-    await store.set_status(payload.execution_id, "healing")
-    await store.add_audit(
+    agent = get_agent(None)
+    await agent.init()
+    await agent.store.set_status(payload.execution_id, "healing")
+    await agent.store.add_audit(
         payload.execution_id,
         "manual_heal",
         {"fix_type": payload.fix_type},
@@ -131,9 +200,23 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str) -> None:
     while True:
         data = await websocket.receive_text()
         callback = SimpleCallback()
-        await kg.add_fact(data, confidence=0.6)
-        result = await orchestrator.run(data, {"user_id": user_id}, callback)
+        agent = get_agent(user_id)
+        await agent.init()
+        await agent.kg.add_fact(data, confidence=0.6)
+        result = await agent.orchestrator.run(data, {"user_id": user_id}, callback)
         await websocket.send_json({"result": result, "events": callback.events})
+
+
+@app.get("/ui")
+async def ui() -> HTMLResponse:
+    agent = get_agent(None)
+    await agent.init()
+    items = await agent.store.list_executions()
+    rows = "\n".join(
+        f"<tr><td>{i['id']}</td><td>{i['status']}</td><td>{i['intent']}</td></tr>"
+        for i in items
+    )
+    html = f\"\"\"\n+    <html>\n+      <head><title>Specter UI</title></head>\n+      <body>\n+        <h2>Specter Executions</h2>\n+        <table border=\"1\" cellpadding=\"6\" cellspacing=\"0\">\n+          <tr><th>ID</th><th>Status</th><th>Intent</th></tr>\n+          {rows}\n+        </table>\n+      </body>\n+    </html>\n+    \"\"\"\n+    return HTMLResponse(html)\n*** End Patch code
 
 
 def run() -> None:

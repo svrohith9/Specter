@@ -29,6 +29,7 @@ ruff = "^0.6.0"
 
 [tool.poetry.scripts]
 specter = "specter.main:run"
+specter-cli = "specter.cli:main"
 
 [build-system]
 requires = ["poetry-core"]
