@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
-
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import JSONResponse
