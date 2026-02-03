@@ -3,15 +3,17 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import Any
 
+from fastapi.responses import JSONResponse
 from fastapi import FastAPI, WebSocket
 from pydantic import BaseModel
-from fastapi.responses import JSONResponse
 
 from .brain.orchestrator import Orchestrator
 from .config import settings
 from .core.logging import configure_logging
 from .graph.streaming import StreamCallback
 from .knowledge.graph import KnowledgeGraph
+from .skills.forge import SkillForge
+from .storage import ExecutionStore
 
 
 class SimpleCallback(StreamCallback):
@@ -46,8 +48,11 @@ class HealingOverrideRequest(BaseModel):
 configure_logging()
 settings.load_yaml()
 
-orchestrator = Orchestrator()
-kg = KnowledgeGraph(db_path="./data/specter.db")
+db_path = "./data/specter.db"
+store = ExecutionStore(db_path=db_path)
+orchestrator = Orchestrator(store=store)
+kg = KnowledgeGraph(db_path=db_path)
+forge = SkillForge(orchestrator.skills.register)
 
 
 @asynccontextmanager
@@ -67,7 +72,11 @@ async def health() -> JSONResponse:
 @app.post("/webhook/{channel}")
 async def receive_message(channel: str, payload: dict[str, Any]) -> JSONResponse:
     callback = SimpleCallback()
-    result = await orchestrator.run(payload.get("text", ""), {"channel": channel}, callback)
+    user_text = payload.get("text", "")
+    await kg.add_fact(user_text, confidence=0.6)
+    result = await orchestrator.run(
+        user_text, {"channel": channel, "user_id": payload.get("user_id", "local")}, callback
+    )
     return JSONResponse({"result": result, "events": callback.events})
 
 
@@ -79,17 +88,29 @@ async def search_knowledge(q: str, user_id: str) -> JSONResponse:
 
 @app.post("/skills/forge")
 async def create_skill(payload: SkillForgeRequest) -> JSONResponse:
-    return JSONResponse({"created": False, "description": payload.description})
+    result = await forge.forge(payload.description)
+    return JSONResponse(result)
 
 
 @app.get("/executions/{exec_id}")
 async def get_execution(exec_id: str) -> JSONResponse:
-    return JSONResponse({"id": exec_id, "status": "stub"})
+    result = await store.get_execution(exec_id)
+    if result is None:
+        return JSONResponse({"error": "not_found", "id": exec_id}, status_code=404)
+    return JSONResponse(result)
 
 
 @app.post("/healing/override")
 async def manual_heal(payload: HealingOverrideRequest) -> JSONResponse:
-    return JSONResponse({"execution_id": payload.execution_id, "fix_type": payload.fix_type})
+    await store.set_status(payload.execution_id, "healing")
+    await store.add_audit(
+        payload.execution_id,
+        "manual_heal",
+        {"fix_type": payload.fix_type},
+    )
+    return JSONResponse(
+        {"execution_id": payload.execution_id, "fix_type": payload.fix_type, "status": "healing"}
+    )
 
 
 @app.websocket("/ws/{user_id}")
@@ -99,6 +120,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str) -> None:
     while True:
         data = await websocket.receive_text()
         callback = SimpleCallback()
+        await kg.add_fact(data, confidence=0.6)
         result = await orchestrator.run(data, {"user_id": user_id}, callback)
         await websocket.send_json({"result": result, "events": callback.events})
 
