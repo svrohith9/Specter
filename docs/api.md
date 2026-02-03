@@ -14,7 +14,9 @@
 
 ## Skills
 - `POST /skills/forge`
-  - Stub endpoint for skill creation
+  - Create a lightweight template skill
+- `POST /skills/install`
+  - Install a template skill from JSON
 
 ## Tools
 - `POST /tools/invoke`
@@ -24,7 +26,7 @@
 
 ## Executions
 - `GET /executions/{id}`
-  - Stub execution trace
+  - Stored execution record
 - `GET /executions`
   - List recent executions
 - `POST /executions/{id}/replay`
@@ -40,4 +42,4 @@
 
 ## UI
 - `GET /ui`
-  - Minimal local dashboard
+  - Minimal local dashboard (HTML)

@@ -6,7 +6,7 @@
 Execution-first autonomous agent with parallel DAG execution, self-healing, structured memory, and presence intelligence.
 
 ## Status
-Early scaffold. Core architecture is in place; functional integrations are being wired in incrementally.
+Production-oriented core is live. The system persists executions, supports a tool gateway, and provides a local UI.
 
 ## Architecture
 ![Specter architecture](docs/architecture.svg)
@@ -19,6 +19,7 @@ Early scaffold. Core architecture is in place; functional integrations are being
 - FastAPI webhooks + WebSocket streaming
 - Tool invocation gateway with policy allow/deny
 - Local CLI for runs and execution replay
+ - Local dashboard and Next.js control UI
 
 ## Quick Start
 
@@ -50,6 +51,14 @@ Or with Docker:
 ```bash
 docker-compose up --build
 ```
+
+## API Highlights
+- `POST /webhook/{channel}` run a task
+- `GET /executions` list executions
+- `POST /executions/{id}/replay` replay stored execution
+- `POST /tools/invoke` call a tool directly
+- `GET /tools` list tools
+- `GET /ui` minimal local dashboard
 
 ## Configuration
 - `config.yaml` controls execution, LLM routing, and channel settings.
