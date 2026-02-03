@@ -8,6 +8,9 @@ Execution-first autonomous agent with parallel DAG execution, self-healing, stru
 ## Status
 Early scaffold. Core architecture is in place; functional integrations are being wired in incrementally.
 
+## Architecture
+![Specter architecture](docs/architecture.svg)
+
 ## Features
 - Parallel execution graphs (DAG-based)
 - Self-healing error handling (strategy-based)

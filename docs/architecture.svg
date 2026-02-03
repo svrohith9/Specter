@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <style>
+    .title { font: 700 28px Arial, sans-serif; fill: #1a1a1a; }
+    .label { font: 600 16px Arial, sans-serif; fill: #111; }
+    .text { font: 14px Arial, sans-serif; fill: #222; }
+    .box { fill: #f8f8f8; stroke: #333; stroke-width: 2; rx: 12; }
+    .accent { fill: #e6f2ff; stroke: #1c4b7a; stroke-width: 2; rx: 12; }
+    .line { stroke: #333; stroke-width: 2; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#333" />
+    </marker>
+  </defs>
+
+  <rect x="30" y="20" width="1140" height="680" fill="#ffffff" stroke="#ddd" stroke-width="2" rx="16"/>
+  <text x="60" y="65" class="title">Specter: Execution‑First Agent (End‑to‑End Flow)</text>
+
+  <!-- Input -->
+  <rect x="80" y="110" width="260" height="80" class="box"/>
+  <text x="100" y="145" class="label">Input Channels</text>
+  <text x="100" y="168" class="text">Webhook / WebSocket / Telegram</text>
+
+  <!-- Intent Compiler -->
+  <rect x="420" y="110" width="300" height="80" class="accent"/>
+  <text x="440" y="145" class="label">Intent Compiler</text>
+  <text x="440" y="168" class="text">Request → Execution DAG</text>
+
+  <!-- Execution Graph -->
+  <rect x="820" y="110" width="300" height="80" class="accent"/>
+  <text x="840" y="145" class="label">Execution Graph</text>
+  <text x="840" y="168" class="text">Parallelizable task nodes</text>
+
+  <!-- Executor -->
+  <rect x="420" y="240" width="300" height="90" class="box"/>
+  <text x="440" y="275" class="label">Streaming Executor</text>
+  <text x="440" y="298" class="text">Runs ready nodes in parallel</text>
+
+  <!-- Healing -->
+  <rect x="80" y="250" width="260" height="90" class="box"/>
+  <text x="100" y="285" class="label">Self‑Healing</text>
+  <text x="100" y="308" class="text">Diagnose → Fix → Retry</text>
+
+  <!-- Knowledge -->
+  <rect x="820" y="240" width="300" height="90" class="box"/>
+  <text x="840" y="275" class="label">Knowledge Graph</text>
+  <text x="840" y="298" class="text">Structured memory (SQLite)</text>
+
+  <!-- Presence -->
+  <rect x="80" y="380" width="260" height="90" class="box"/>
+  <text x="100" y="415" class="label">Presence Intelligence</text>
+  <text x="100" y="438" class="text">Ask vs execute vs defer</text>
+
+  <!-- Skills -->
+  <rect x="420" y="380" width="300" height="90" class="box"/>
+  <text x="440" y="415" class="label">Skills / Tools</text>
+  <text x="440" y="438" class="text">Builtin + Generated skills</text>
+
+  <!-- Output -->
+  <rect x="820" y="380" width="300" height="90" class="accent"/>
+  <text x="840" y="415" class="label">Result Synthesizer</text>
+  <text x="840" y="438" class="text">Streamed response to user</text>
+
+  <!-- Lines -->
+  <line x1="340" y1="150" x2="420" y2="150" class="line"/>
+  <line x1="720" y1="150" x2="820" y2="150" class="line"/>
+  <line x1="970" y1="190" x2="970" y2="240" class="line"/>
+  <line x1="720" y1="285" x2="820" y2="285" class="line"/>
+  <line x1="420" y1="285" x2="340" y2="285" class="line"/>
+  <line x1="570" y1="330" x2="570" y2="380" class="line"/>
+  <line x1="340" y1="425" x2="420" y2="425" class="line"/>
+  <line x1="720" y1="425" x2="820" y2="425" class="line"/>
+
+  <!-- Footer -->
+  <text x="60" y="665" class="text">Single‑node deploy, SQLite memory, parallel execution, self‑healing.</text>
+</svg>
