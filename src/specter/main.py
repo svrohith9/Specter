@@ -45,6 +45,11 @@ class HealingOverrideRequest(BaseModel):
     fix_type: str
 
 
+class ToolInvokeRequest(BaseModel):
+    tool_name: str
+    params: dict[str, Any] = {}
+
+
 configure_logging()
 settings.load_yaml()
 
@@ -89,6 +94,12 @@ async def search_knowledge(q: str, user_id: str) -> JSONResponse:
 @app.post("/skills/forge")
 async def create_skill(payload: SkillForgeRequest) -> JSONResponse:
     result = await forge.forge(payload.description)
+    return JSONResponse(result)
+
+
+@app.post("/tools/invoke")
+async def invoke_tool(payload: ToolInvokeRequest) -> JSONResponse:
+    result = await orchestrator.skills.execute(payload.tool_name, payload.params)
     return JSONResponse(result)
 
 

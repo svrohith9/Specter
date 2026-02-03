@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from ..core.security import load_tool_policy
 from ..healing.engine import HealingEngine
 from ..llm.router import LLMRouter
 from ..skills.manager import SkillManager
@@ -15,6 +16,7 @@ class StreamingExecutor:
         self.skills = skills
         self.healer = healer
         self.llm = LLMRouter()
+        self.policy = load_tool_policy()
 
     async def execute(self, graph: ExecutionGraph, callback: StreamCallback) -> Any:
         sorted_nodes = graph.topological_sort()
@@ -78,6 +80,7 @@ class StreamingExecutor:
     ) -> Any:
         if node.type == "tool":
             params = override_params or node.spec.params
+            self.policy.check(node.spec.tool_name or "")
             return await self.skills.execute(node.spec.tool_name or "", params)
         if node.type == "llm":
             prompt = node.spec.prompt or ""

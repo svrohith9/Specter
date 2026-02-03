@@ -16,6 +16,10 @@
 - `POST /skills/forge`
   - Stub endpoint for skill creation
 
+## Tools
+- `POST /tools/invoke`
+  - Invoke a registered tool (e.g., `calculate`, `web_fetch`)
+
 ## Executions
 - `GET /executions/{id}`
   - Stub execution trace

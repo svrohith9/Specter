@@ -17,6 +17,7 @@ Early scaffold. Core architecture is in place; functional integrations are being
 - Structured knowledge graph memory (SQLite)
 - Presence intelligence for confirmation vs autonomy
 - FastAPI webhooks + WebSocket streaming
+- Tool invocation gateway with policy allow/deny
 
 ## Quick Start
 

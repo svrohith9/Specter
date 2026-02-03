@@ -48,6 +48,8 @@ class SecurityConfig(BaseModel):
     sandbox: str = "firejail"
     allowed_imports: list[str] = Field(default_factory=list)
     blocked_patterns: list[str] = Field(default_factory=list)
+    allowed_tools: list[str] = Field(default_factory=list)
+    blocked_tools: list[str] = Field(default_factory=list)
     max_execution_time: int = 30
     max_memory_mb: int = 256
 

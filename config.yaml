@@ -49,5 +49,7 @@ specter:
     sandbox: "firejail"
     allowed_imports: ["requests", "bs4", "json", "re", "datetime", "urllib"]
     blocked_patterns: ["os.system", "subprocess", "eval", "exec", "open("]
+    allowed_tools: []
+    blocked_tools: []
     max_execution_time: 30
     max_memory_mb: 256
