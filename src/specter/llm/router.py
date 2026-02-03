@@ -6,6 +6,7 @@ from typing import Any
 from litellm import acompletion
 
 from ..config import settings
+from ..core.reliability import RetryPolicy
 
 
 class LLMError(RuntimeError):
@@ -16,6 +17,11 @@ class LLMRouter:
     def __init__(self, routes: list[dict[str, Any]] | None = None) -> None:
         raw_routes = routes or settings.specter.llm.get("router", [])
         self.routes: list[dict[str, Any]] = []
+        self._retry = RetryPolicy(
+            max_attempts=settings.specter.execution.retry_attempts,
+            base_delay=settings.specter.execution.retry_base_delay,
+            max_delay=settings.specter.execution.retry_max_delay,
+        )
         for route in raw_routes:
             if isinstance(route, dict):
                 if self._route_enabled(route):
@@ -68,7 +74,10 @@ class LLMRouter:
                         "type": "json_schema",
                         "json_schema": json_schema,
                     }
-                resp = await acompletion(**params)
+                async def _call() -> Any:
+                    return await acompletion(**params)
+
+                resp = await self._retry.run(_call)
                 content = resp.choices[0].message.content
                 if not content:
                     raise LLMError("Empty response")

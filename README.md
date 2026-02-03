@@ -19,9 +19,10 @@ Specter is an execution-first autonomous agent that turns intent into paralleliz
 ## Core Capabilities
 - Intent → execution graph compilation
 - Parallel tool execution with traceable events
-- Knowledge graph memory (SQLite)
-- Skill registry and tool invocation endpoints
+- Knowledge graph memory (SQLite) with TTL + summaries
+- Skill registry, code generation, and tool invocation endpoints
 - Execution replay and audit trail
+- Multi-agent delegation by role
 
 ## Use Cases
 - Launch and project planning runbooks

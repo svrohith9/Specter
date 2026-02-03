@@ -7,7 +7,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from .agent import AgentRuntime, build_agent_runtime
+from .agent import AgentRuntime, build_agent_runtime, resolve_agent_by_role
 from .config import settings
 from .core.logging import configure_logging
 from .graph.models import ExecutionGraph
@@ -36,6 +36,7 @@ class SimpleCallback(StreamCallback):
 
 class SkillForgeRequest(BaseModel):
     description: str
+    examples: list[dict[str, Any]] | None = None
 
 
 class HealingOverrideRequest(BaseModel):
@@ -55,6 +56,7 @@ class SkillInstallRequest(BaseModel):
 
 class ToolListResponse(BaseModel):
     tools: list[str]
+    details: list[dict[str, Any]] = []
 
 
 class SkillRunRequest(BaseModel):
@@ -68,6 +70,25 @@ class SkillListResponse(BaseModel):
 
 class EntityQueryResponse(BaseModel):
     entities: list[dict[str, Any]]
+
+
+class SummaryResponse(BaseModel):
+    summaries: list[dict[str, Any]]
+
+
+class SummaryCreateResponse(BaseModel):
+    summary: dict[str, Any]
+
+
+class AgentListResponse(BaseModel):
+    agents: list[dict[str, Any]]
+
+
+class DelegateRequest(BaseModel):
+    task: str
+    role: str | None = None
+    agent_id: str | None = None
+    user_id: str | None = None
 
 
 configure_logging()
@@ -130,12 +151,55 @@ async def search_entities(q: str, user_id: str) -> EntityQueryResponse:
     return EntityQueryResponse(entities=entities)
 
 
+@app.get("/knowledge/summary")
+async def list_summaries(user_id: str) -> SummaryResponse:
+    agent = get_agent(user_id)
+    await agent.init()
+    summaries = await agent.kg.list_summaries()
+    return SummaryResponse(summaries=summaries)
+
+
+@app.post("/knowledge/summarize")
+async def create_summary(user_id: str) -> SummaryCreateResponse:
+    agent = get_agent(user_id)
+    await agent.init()
+    summary = await agent.kg.summarize_recent()
+    return SummaryCreateResponse(summary=summary)
+
+
+@app.get("/agents")
+async def list_agents() -> AgentListResponse:
+    agents = []
+    for agent_id, cfg in settings.specter.agents.items():
+        agents.append({"id": agent_id, "role": cfg.role})
+    if not agents:
+        agents.append({"id": settings.specter.default_agent, "role": "operator"})
+    return AgentListResponse(agents=agents)
+
+
+@app.post("/agents/delegate")
+async def delegate_task(payload: DelegateRequest) -> JSONResponse:
+    target_id = payload.agent_id
+    if not target_id and payload.role:
+        target_id = resolve_agent_by_role(settings.specter, payload.role)
+    agent = get_agent(target_id)
+    await agent.init()
+    callback = SimpleCallback()
+    result = await agent.orchestrator.run(
+        payload.task,
+        {"channel": "delegate", "user_id": payload.user_id or "local"},
+        callback,
+    )
+    return JSONResponse({"agent_id": agent.agent_id, "result": result, "events": callback.events})
+
+
 @app.post("/skills/forge")
 async def create_skill(payload: SkillForgeRequest) -> JSONResponse:
     agent = get_agent(None)
     await agent.init()
     result = await agent.forge.forge(
         payload.description,
+        examples=payload.examples,
         persist=lambda name, data: agent.orchestrator.skills.persist_template_skill(
             agent.store.db_path, name, data
         ),
@@ -154,7 +218,10 @@ async def invoke_tool(payload: ToolInvokeRequest) -> JSONResponse:
 @app.get("/tools")
 async def list_tools() -> ToolListResponse:
     agent = get_agent(None)
-    return ToolListResponse(tools=sorted(agent.orchestrator.skills._skills.keys()))
+    return ToolListResponse(
+        tools=sorted(agent.orchestrator.skills._skills.keys()),
+        details=agent.orchestrator.skills.list_specs(),
+    )
 
 
 @app.post("/skills/install")

@@ -18,11 +18,19 @@ class ExecutionConfig(BaseModel):
     healing_attempts: int = 3
     stream_partial: bool = True
     deterministic_planning: bool = True
+    retry_attempts: int = 3
+    retry_base_delay: float = 0.4
+    retry_max_delay: float = 4.0
+    circuit_breaker_threshold: int = 3
+    circuit_breaker_timeout: int = 30
 
 
 class KnowledgeConfig(BaseModel):
     graph_pruning: bool = True
     vector_cache_size: int = 10_000
+    default_ttl_days: int = 30
+    sensitive_ttl_days: int = 7
+    summary_window: int = 20
 
 
 class TelegramConfig(BaseModel):
@@ -58,6 +66,7 @@ class SecurityConfig(BaseModel):
 class AgentConfig(BaseModel):
     db_path: str | None = None
     security: SecurityConfig = Field(default_factory=SecurityConfig)
+    role: str | None = None
 
 
 class SpecterConfig(BaseModel):

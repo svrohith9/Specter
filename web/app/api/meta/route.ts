@@ -15,6 +15,7 @@ export async function GET() {
     return NextResponse.json(
       {
         tools: toolsJson.tools ?? [],
+        tool_details: toolsJson.details ?? [],
         executions: execJson.executions ?? [],
         errors: {
           tools: toolsJson.error ?? null,

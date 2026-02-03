@@ -13,6 +13,10 @@
   - Returns recent knowledge graph results
 - `GET /knowledge/entities?q=...&user_id=...`
   - Returns entity nodes and relation hints
+- `GET /knowledge/summary?user_id=...`
+  - Returns recent memory summaries
+- `POST /knowledge/summarize?user_id=...`
+  - Creates a new summary from recent facts
 
 ## Skills
 - `POST /skills/forge`
@@ -37,6 +41,12 @@
   - List recent executions
 - `POST /executions/{id}/replay`
   - Replay a stored execution graph
+
+## Agents
+- `GET /agents`
+  - List registered agents and roles
+- `POST /agents/delegate`
+  - Delegate a task to a specific agent or role
 
 ## Healing
 - `POST /healing/override`

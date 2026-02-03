@@ -32,6 +32,13 @@ def resolve_agent_config(config: SpecterConfig, agent_id: str) -> AgentConfig | 
     return config.agents.get(agent_id)
 
 
+def resolve_agent_by_role(config: SpecterConfig, role: str) -> str | None:
+    for agent_id, agent_cfg in config.agents.items():
+        if agent_cfg.role == role:
+            return agent_id
+    return None
+
+
 def resolve_db_path(config: SpecterConfig, agent_id: str) -> str:
     agent_cfg = resolve_agent_config(config, agent_id)
     if agent_cfg and agent_cfg.db_path:

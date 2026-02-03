@@ -28,6 +28,15 @@ class ExecutionStore:
     async def complete_execution(self, exec_id: str, result: dict[str, Any]) -> None:
         now = datetime.utcnow().isoformat()
         async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "SELECT started_at FROM executions WHERE id = ?",
+                (exec_id,),
+            )
+            row = await cursor.fetchone()
+            duration_ms = None
+            if row and row[0]:
+                start = datetime.fromisoformat(row[0])
+                duration_ms = int((datetime.utcnow() - start).total_seconds() * 1000)
             await db.execute(
                 """
                 UPDATE executions
@@ -36,11 +45,25 @@ class ExecutionStore:
                 """,
                 ("completed", json.dumps(result), now, exec_id),
             )
+            if duration_ms is not None:
+                await db.execute(
+                    "UPDATE executions SET duration_ms = ? WHERE id = ?",
+                    (duration_ms, exec_id),
+                )
             await db.commit()
 
     async def fail_execution(self, exec_id: str, error: str) -> None:
         now = datetime.utcnow().isoformat()
         async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "SELECT started_at FROM executions WHERE id = ?",
+                (exec_id,),
+            )
+            row = await cursor.fetchone()
+            duration_ms = None
+            if row and row[0]:
+                start = datetime.fromisoformat(row[0])
+                duration_ms = int((datetime.utcnow() - start).total_seconds() * 1000)
             await db.execute(
                 """
                 UPDATE executions
@@ -49,6 +72,11 @@ class ExecutionStore:
                 """,
                 ("failed", json.dumps({"error": error}), now, exec_id),
             )
+            if duration_ms is not None:
+                await db.execute(
+                    "UPDATE executions SET duration_ms = ? WHERE id = ?",
+                    (duration_ms, exec_id),
+                )
             await db.commit()
 
     async def set_status(self, exec_id: str, status: str) -> None:
@@ -86,7 +114,7 @@ class ExecutionStore:
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute(
                 """
-                SELECT id, intent, status, started_at, completed_at
+                SELECT id, intent, status, started_at, completed_at, duration_ms
                 FROM executions
                 ORDER BY started_at DESC
                 LIMIT ?
@@ -101,6 +129,7 @@ class ExecutionStore:
                     "status": r[2],
                     "started_at": r[3],
                     "completed_at": r[4],
+                    "duration_ms": r[5],
                 }
                 for r in rows
             ]

@@ -10,10 +10,18 @@ specter:
     healing_attempts: 3
     stream_partial: true
     deterministic_planning: true
+    retry_attempts: 3
+    retry_base_delay: 0.4
+    retry_max_delay: 4.0
+    circuit_breaker_threshold: 3
+    circuit_breaker_timeout: 30
 
   knowledge:
     graph_pruning: true
     vector_cache_size: 10000
+    default_ttl_days: 30
+    sensitive_ttl_days: 7
+    summary_window: 20
 
   channels:
     telegram:
@@ -60,3 +68,4 @@ specter:
   agents:
     default:
       db_path: "./data/specter.db"
+      role: "operator"

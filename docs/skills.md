@@ -6,8 +6,24 @@ Skills are executable tools used by the execution graph. Built-ins live in `src/
 ## Design
 - Async functions with structured return values
 - Registered via `SkillManager`
-- Lightweight template skills can be created via `POST /skills/forge`
+- Skills can be generated with code + tests via `POST /skills/forge`
 - Skills can be installed from JSON via `POST /skills/install`
+
+## Skill Forge payload
+```json
+{
+  "description": "Summarize an array of bullet points",
+  "examples": [
+    { "input": { "bullets": ["a", "b"] }, "output": "a; b" }
+  ]
+}
+```
+
+Generated skills implement:
+```python
+async def run(params: dict) -> dict:
+    return {"success": True, "data": ..., "error": None}
+```
 
 ## Return format
 ```json

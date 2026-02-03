@@ -29,6 +29,46 @@ TOOL_CATALOG: list[dict[str, Any]] = [
         "description": "Fetch text from a URL.",
         "params": {"url": "string", "timeout": "int", "max_chars": "int"},
     },
+    {
+        "name": "web_search",
+        "description": "Search the web for a query.",
+        "params": {"query": "string", "max_results": "int"},
+    },
+    {
+        "name": "file_read",
+        "description": "Read a file from the workspace.",
+        "params": {"path": "string", "max_chars": "int"},
+    },
+    {
+        "name": "file_write",
+        "description": "Write a file to the workspace.",
+        "params": {"path": "string", "content": "string", "append": "bool"},
+    },
+    {
+        "name": "file_list",
+        "description": "List files in a workspace directory.",
+        "params": {"path": "string", "pattern": "string"},
+    },
+    {
+        "name": "calendar_list_events",
+        "description": "List calendar events (connector required).",
+        "params": {"start": "string", "end": "string"},
+    },
+    {
+        "name": "calendar_create_event",
+        "description": "Create a calendar event (connector required).",
+        "params": {"title": "string", "start": "string", "end": "string"},
+    },
+    {
+        "name": "email_send",
+        "description": "Send an email (connector required).",
+        "params": {"to": "string", "subject": "string", "body": "string"},
+    },
+    {
+        "name": "email_search",
+        "description": "Search email (connector required).",
+        "params": {"query": "string", "max_results": "int"},
+    },
 ]
 
 

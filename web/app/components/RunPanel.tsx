@@ -8,6 +8,7 @@ type Execution = {
   status: string;
   started_at: string | null;
   completed_at: string | null;
+  duration_ms?: number | null;
 };
 
 type RunResult = {
@@ -18,12 +19,22 @@ type RunResult = {
   events?: { event: string; node?: string; error?: string; result?: unknown }[];
 };
 
+type ToolSpec = {
+  name: string;
+  description: string;
+  params: Record<string, string>;
+  category?: string;
+  example?: string | null;
+};
+
 export default function RunPanel() {
   const [text, setText] = useState("");
   const [agent, setAgent] = useState("default");
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<RunResult | null>(null);
   const [tools, setTools] = useState<string[]>([]);
+  const [toolDetails, setToolDetails] = useState<ToolSpec[]>([]);
+  const [selectedTool, setSelectedTool] = useState<ToolSpec | null>(null);
   const [executions, setExecutions] = useState<Execution[]>([]);
   const [backendStatus, setBackendStatus] = useState("ok");
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -44,6 +55,10 @@ export default function RunPanel() {
       } else {
         setBackendStatus("ok");
         setTools(meta.tools ?? []);
+        setToolDetails(meta.tool_details ?? []);
+        if (!selectedTool && meta.tool_details?.length) {
+          setSelectedTool(meta.tool_details[0]);
+        }
       }
       if (meta.errors?.executions) {
         setExecutions([]);
@@ -234,8 +249,42 @@ export default function RunPanel() {
           <ul className="list">
             {loadingTools
               ? [1, 2, 3].map((i) => <li key={i} className="skeleton" />)
-              : tools.map((tool) => <li key={tool}>{tool}</li>)}
+              : tools.map((tool) => (
+                  <li key={tool}>
+                    <button
+                      className={`ghost list-button ${selectedTool?.name === tool ? "active" : ""}`}
+                      onClick={() => {
+                        const spec = toolDetails.find((item) => item.name === tool) || null;
+                        setSelectedTool(spec);
+                      }}
+                    >
+                      {tool}
+                    </button>
+                  </li>
+                ))}
           </ul>
+          <div className="inspector">
+            <div className="muted">Tool inspector</div>
+            {selectedTool ? (
+              <div className="inspector-body">
+                <div className="inspector-title">{selectedTool.name}</div>
+                <div className="muted">{selectedTool.description}</div>
+                {selectedTool.example && (
+                  <div className="inspector-example">Example: {selectedTool.example}</div>
+                )}
+                <div className="inspector-params">
+                  {Object.entries(selectedTool.params || {}).map(([key, val]) => (
+                    <div key={key} className="param-row">
+                      <span className="param-key">{key}</span>
+                      <span className="param-type">{val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="muted">Select a tool to inspect.</div>
+            )}
+          </div>
         </div>
         <div className="card">
           <h3>Execution timeline</h3>
@@ -250,6 +299,9 @@ export default function RunPanel() {
                       <span className={`status ${ex.status}`}>{ex.status}</span>
                     </div>
                     <div className="muted">{ex.intent}</div>
+                    {ex.duration_ms != null && (
+                      <div className="muted">Duration: {ex.duration_ms} ms</div>
+                    )}
                   </li>
                 ))}
           </ul>
