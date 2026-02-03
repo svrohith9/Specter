@@ -3,10 +3,10 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from .models import ExecutionGraph, Node
-from .streaming import StreamCallback
 from ..healing.engine import HealingEngine
 from ..skills.manager import SkillManager
+from .models import ExecutionGraph, Node
+from .streaming import StreamCallback
 
 
 class StreamingExecutor:
