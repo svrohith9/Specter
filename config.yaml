@@ -24,6 +24,14 @@ specter:
 
   llm:
     router:
+      - provider: "perplexity"
+        model: "sonar-pro"
+        priority: 0
+        timeout: 12
+      - provider: "gemini"
+        model: "gemini-1.5-pro"
+        priority: 0
+        timeout: 12
       - provider: "anthropic"
         model: "claude-3-5-sonnet-20241022"
         priority: 1
