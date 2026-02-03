@@ -1,0 +1,45 @@
+specter:
+  name: "Specter"
+  autonomy_level: "high"
+
+  execution:
+    max_parallel: 10
+    timeout_seconds: 300
+    healing_attempts: 3
+    stream_partial: true
+
+  knowledge:
+    graph_pruning: true
+    vector_cache_size: 10000
+
+  channels:
+    telegram:
+      enabled: true
+      webhook_url: "${WEBHOOK_URL}/webhook/telegram"
+    email:
+      enabled: false
+      imap_poll_interval: 60
+    slack:
+      enabled: false
+
+  llm:
+    router:
+      - provider: "anthropic"
+        model: "claude-3-5-sonnet-20241022"
+        priority: 1
+        timeout: 10
+      - provider: "openai"
+        model: "gpt-4o-mini"
+        priority: 2
+        timeout: 15
+      - provider: "ollama"
+        model: "llama3.2"
+        priority: 3
+        local: true
+
+  security:
+    sandbox: "firejail"
+    allowed_imports: ["requests", "bs4", "json", "re", "datetime", "urllib"]
+    blocked_patterns: ["os.system", "subprocess", "eval", "exec", "open("]
+    max_execution_time: 30
+    max_memory_mb: 256

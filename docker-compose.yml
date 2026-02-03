@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  specter:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./config.yaml:/app/config.yaml
+    environment:
+      - SPECTER_CONFIG=/app/config.yaml
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    profiles: ["redis"]
+    ports:
+      - "6379:6379"
