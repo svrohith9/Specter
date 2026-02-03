@@ -1,4 +1,8 @@
 # Specter
+
+![CI](https://github.com/svrohith9/Specter/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 Execution-first autonomous agent with parallel DAG execution, self-healing, structured memory, and presence intelligence.
 
 ## Status
@@ -28,14 +32,12 @@ docker-compose up --build
 - `config.yaml` controls execution, LLM routing, and channel settings.
 - `.env.example` shows required environment variables.
 
-## API
-- `POST /webhook/{channel}`
-- `WS /ws/{user_id}`
-- `GET /knowledge/search`
-- `POST /skills/forge`
-- `GET /executions/{id}`
-- `POST /healing/override`
-- `GET /health`
+## Docs
+- `docs/architecture.md`
+- `docs/api.md`
+- `docs/deployment.md`
+- `docs/skills.md`
+- `docs/roadmap.md`
 
 ## Development
 
