@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import JSONResponse
 
@@ -35,15 +37,17 @@ class SimpleCallback(StreamCallback):
 configure_logging()
 settings.load_yaml()
 
-app = FastAPI(title="Specter", version="0.1.0")
-
 orchestrator = Orchestrator()
 kg = KnowledgeGraph(db_path="./data/specter.db")
 
 
-@app.on_event("startup")
-async def on_startup() -> None:
+@asynccontextmanager
+async def lifespan(_: FastAPI):
     await kg.init()
+    yield
+
+
+app = FastAPI(title="Specter", version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/health")
