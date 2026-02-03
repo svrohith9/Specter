@@ -34,6 +34,17 @@ specter-cli tools
 specter-cli exec-list
 ```
 
+## Web UI (Next.js)
+
+```bash
+cd web
+npm install
+cp .env.local.example .env.local
+npm run dev
+```
+
+Open `http://localhost:3000` to interact with Specter.
+
 Or with Docker:
 
 ```bash
