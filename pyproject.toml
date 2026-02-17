@@ -20,7 +20,7 @@ python-dotenv = "^1.0.1"
 structlog = "^24.2.0"
 rich = "^14.3.2"
 pyyaml = "^6.0.2"
-litellm = "^1.81.7"
+litellm = "^1.81.13"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.0"
